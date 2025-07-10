@@ -26,7 +26,7 @@ export class FileUploadMiddleware implements NestMiddleware {
   }
 
   private validateFileUpload(req: Request): void {
-    const file = req.body.file || req.file
+    const file = req.body.file || (req as any).file
 
     if (!file) {
       throw new BadRequestException('No file provided')
