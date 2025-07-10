@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import * as crypto from 'crypto'
 
 export interface GatewayRequest {
@@ -364,7 +364,13 @@ export class ApiGatewayService {
   private validateJWT(token: string): string {
     // TODO: Implement JWT validation
     // This is a placeholder - in production, use a proper JWT library
-    return 'user-id'
+    const jwt = require('jsonwebtoken')
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
+      return decoded.sub || decoded.userId
+    } catch (error) {
+      throw new Error('Invalid JWT token')
+    }
   }
 
   private buildCacheKey(request: GatewayRequest, route: RouteConfig): string {
@@ -471,7 +477,7 @@ export class ApiGatewayService {
     for (const service of services) {
       try {
         const url = this.getServiceUrl(service)
-        const response = await fetch(`${url}/health`, { timeout: 5000 })
+        const response = await fetch(`${url}/health`)
         health[service] = response.ok ? 'healthy' : 'unhealthy'
       } catch (error) {
         health[service] = 'unhealthy'
@@ -480,4 +486,4 @@ export class ApiGatewayService {
 
     return health
   }
-} 
+}    
