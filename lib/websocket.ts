@@ -1,4 +1,6 @@
 import { io, Socket } from 'socket.io-client';
+import { OperationalTransforms, TextOperation } from './operational-transforms';
+import { OperationalTransforms, TextOperation } from './operational-transforms';
 
 export interface CollaborationEvent {
   type: 'code_change' | 'cursor_move' | 'user_join' | 'user_leave' | 'chat_message' | 'file_save';
@@ -28,7 +30,9 @@ export interface Room {
 class WebSocketService {
   private socket: Socket | null = null;
   private rooms: Map<string, Room> = new Map();
-  private eventHandlers: Map<string, Function[]> = new Map();
+  private eventHandlers: Map<string, ((...args: any[]) => void)[]> = new Map();
+  private latency = 0;
+  private userId = '';
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
@@ -264,4 +268,4 @@ export const sendCursorMove = (roomId: string, cursor: { line: number; ch: numbe
 export const sendChatMessage = (roomId: string, message: string) => 
   websocketService.sendChatMessage(roomId, message);
 export const saveFile = (roomId: string, fileId: string, content: string) => 
-  websocketService.saveFile(roomId, fileId, content); 
+  websocketService.saveFile(roomId, fileId, content);      
