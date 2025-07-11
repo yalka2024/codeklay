@@ -1,0 +1,465 @@
+# CodePal Security Monitoring and Alerting Configuration
+# This file configures security monitoring, alerting, and incident detection
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-monitoring-config
+  namespace: codepal-prod
+data:
+  # Security Monitoring Rules
+  security-rules.yml: |
+    # Security Event Detection Rules
+    security_events:
+      # Authentication Failures
+      auth_failures:
+        - name: "Multiple Login Failures"
+          condition: "count(auth_failure) > 5 in 5m"
+          severity: "warning"
+          action: "alert"
+        
+        - name: "Brute Force Attack"
+          condition: "count(auth_failure) > 20 in 1m"
+          severity: "critical"
+          action: "block_ip"
+        
+        - name: "Suspicious Login Location"
+          condition: "auth_success AND geoip_country NOT IN ['US', 'CA', 'GB']"
+          severity: "warning"
+          action: "alert"
+      
+      # API Security
+      api_security:
+        - name: "Rate Limit Exceeded"
+          condition: "count(api_request) > 1000 in 1m"
+          severity: "warning"
+          action: "rate_limit"
+        
+        - name: "Suspicious API Usage"
+          condition: "api_request AND user_agent LIKE '%bot%' OR user_agent LIKE '%scanner%'"
+          severity: "warning"
+          action: "alert"
+        
+        - name: "Unauthorized API Access"
+          condition: "api_request AND status_code = 401"
+          severity: "critical"
+          action: "block_user"
+      
+      # Data Access Monitoring
+      data_access:
+        - name: "Bulk Data Export"
+          condition: "count(data_export) > 1000 in 1h"
+          severity: "warning"
+          action: "alert"
+        
+        - name: "Sensitive Data Access"
+          condition: "data_access AND table IN ['users', 'payment_info', 'api_keys']"
+          severity: "warning"
+          action: "log"
+        
+        - name: "Unusual Data Access Pattern"
+          condition: "data_access AND user_id NOT IN (SELECT user_id FROM user_sessions WHERE active = true)"
+          severity: "critical"
+          action: "alert"
+      
+      # System Security
+      system_security:
+        - name: "Container Escape Attempt"
+          condition: "process_exec AND parent_process = 'docker'"
+          severity: "critical"
+          action: "isolate_container"
+        
+        - name: "Privilege Escalation"
+          condition: "process_exec AND effective_user = 'root' AND parent_user != 'root'"
+          severity: "critical"
+          action: "alert"
+        
+        - name: "Suspicious File Access"
+          condition: "file_access AND path LIKE '/etc/passwd' OR path LIKE '/etc/shadow'"
+          severity: "warning"
+          action: "alert"
+      
+      # Network Security
+      network_security:
+        - name: "Unusual Outbound Traffic"
+          condition: "network_connection AND dest_ip NOT IN (SELECT ip FROM whitelist)"
+          severity: "warning"
+          action: "alert"
+        
+        - name: "Port Scanning"
+          condition: "count(connection_attempt) > 100 in 1m"
+          severity: "critical"
+          action: "block_ip"
+        
+        - name: "Data Exfiltration"
+          condition: "network_connection AND bytes_sent > 100MB in 1h"
+          severity: "critical"
+          action: "block_connection"
+
+  # Security Alerting Configuration
+  security-alerts.yml: |
+    # Alert Severity Levels
+    alert_severities:
+      critical:
+        response_time: "15 minutes"
+        notification_channels: ["pagerduty", "slack", "email", "sms"]
+        escalation: "immediate"
+        auto_remediation: true
+      
+      high:
+        response_time: "1 hour"
+        notification_channels: ["slack", "email"]
+        escalation: "30 minutes"
+        auto_remediation: false
+      
+      warning:
+        response_time: "4 hours"
+        notification_channels: ["slack", "email"]
+        escalation: "2 hours"
+        auto_remediation: false
+      
+      info:
+        response_time: "24 hours"
+        notification_channels: ["email"]
+        escalation: "12 hours"
+        auto_remediation: false
+
+    # Notification Channels
+    notification_channels:
+      pagerduty:
+        service_key: "${PAGERDUTY_SERVICE_KEY}"
+        escalation_policy: "security-team"
+        urgency: "high"
+      
+      slack:
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#security-alerts"
+        username: "Security Bot"
+        icon_emoji: ":warning:"
+      
+      email:
+        smtp_server: "smtp.gmail.com"
+        smtp_port: 587
+        username: "${EMAIL_USERNAME}"
+        password: "${EMAIL_PASSWORD}"
+        recipients: ["security@codepal.com", "incident-commander@codepal.com"]
+      
+      sms:
+        provider: "twilio"
+        account_sid: "${TWILIO_ACCOUNT_SID}"
+        auth_token: "${TWILIO_AUTH_TOKEN}"
+        from_number: "${TWILIO_FROM_NUMBER}"
+        to_numbers: ["${SECURITY_PHONE_NUMBER}"]
+
+  # Security Dashboard Configuration
+  security-dashboard.yml: |
+    # Grafana Dashboard Configuration
+    dashboard:
+      title: "CodePal Security Overview"
+      refresh: "30s"
+      timezone: "UTC"
+      
+      panels:
+        # Authentication Security
+        auth_security:
+          - title: "Login Attempts"
+            type: "graph"
+            query: "rate(auth_attempts_total[5m])"
+            thresholds:
+              warning: 10
+              critical: 50
+        
+        - title: "Failed Logins"
+            type: "graph"
+            query: "rate(auth_failures_total[5m])"
+            thresholds:
+              warning: 5
+              critical: 20
+        
+        - title: "Suspicious Logins"
+            type: "stat"
+            query: "count(auth_suspicious_total)"
+            thresholds:
+              warning: 1
+              critical: 5
+        
+        # API Security
+        api_security:
+          - title: "API Requests"
+            type: "graph"
+            query: "rate(api_requests_total[5m])"
+            thresholds:
+              warning: 1000
+              critical: 5000
+        
+        - title: "API Errors"
+            type: "graph"
+            query: "rate(api_errors_total[5m])"
+            thresholds:
+              warning: 10
+              critical: 50
+        
+        - title: "Rate Limit Violations"
+            type: "stat"
+            query: "count(rate_limit_violations_total)"
+            thresholds:
+              warning: 5
+              critical: 20
+        
+        # System Security
+        system_security:
+          - title: "Container Security Events"
+            type: "graph"
+            query: "rate(container_security_events_total[5m])"
+            thresholds:
+              warning: 1
+              critical: 5
+        
+        - title: "Privilege Escalation Attempts"
+            type: "stat"
+            query: "count(privilege_escalation_attempts_total)"
+            thresholds:
+              warning: 1
+              critical: 3
+        
+        - title: "File Access Violations"
+            type: "graph"
+            query: "rate(file_access_violations_total[5m])"
+            thresholds:
+              warning: 5
+              critical: 20
+        
+        # Network Security
+        network_security:
+          - title: "Network Connections"
+            type: "graph"
+            query: "rate(network_connections_total[5m])"
+            thresholds:
+              warning: 100
+              critical: 500
+        
+        - title: "Blocked IPs"
+            type: "stat"
+            query: "count(blocked_ips_total)"
+            thresholds:
+              warning: 10
+              critical: 50
+        
+        - title: "Data Transfer Volume"
+            type: "graph"
+            query: "rate(data_transfer_bytes_total[5m])"
+            thresholds:
+              warning: 100MB
+              critical: 1GB
+
+---
+# Security Monitoring Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-monitoring
+  namespace: codepal-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: security-monitoring
+  template:
+    metadata:
+      labels:
+        app: security-monitoring
+    spec:
+      serviceAccountName: security-monitoring-sa
+      containers:
+      - name: security-monitor
+        image: codepal/security-monitoring:latest
+        ports:
+        - containerPort: 9090
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus:9090"
+        - name: GRAFANA_URL
+          value: "http://grafana:3000"
+        - name: ALERTMANAGER_URL
+          value: "http://alertmanager:9093"
+        - name: LOG_LEVEL
+          value: "info"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: security-config
+          mountPath: /etc/security-monitoring
+        - name: security-logs
+          mountPath: /var/log/security
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 9090
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: security-config
+        configMap:
+          name: security-monitoring-config
+      - name: security-logs
+        emptyDir: {}
+
+---
+# Security Monitoring Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-monitoring
+  namespace: codepal-prod
+spec:
+  selector:
+    app: security-monitoring
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+# Security Monitoring Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: security-monitoring-sa
+  namespace: codepal-prod
+
+---
+# Security Monitoring RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: security-monitoring-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "secrets", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["security.istio.io"]
+  resources: ["authorizationpolicies"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: security-monitoring-binding
+subjects:
+- kind: ServiceAccount
+  name: security-monitoring-sa
+  namespace: codepal-prod
+roleRef:
+  kind: ClusterRole
+  name: security-monitoring-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Security Monitoring Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: security-monitoring-policy
+  namespace: codepal-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: security-monitoring
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090
+    - from:
+        - podSelector:
+            matchLabels:
+              app: grafana
+      ports:
+        - protocol: TCP
+          port: 9090
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090
+    - to:
+        - podSelector:
+            matchLabels:
+              app: alertmanager
+      ports:
+        - protocol: TCP
+          port: 9093
+    - ports:
+        - protocol: TCP
+          port: 443
+      to: []
+      # Allow HTTPS outbound for external APIs
+
+---
+# Security Monitoring Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: security-monitoring-hpa
+  namespace: codepal-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: security-monitoring
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15 

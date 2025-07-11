@@ -1,0 +1,252 @@
+# Complete security configuration
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security
+
+---
+# Network Policies
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: codepal-network-policy
+  namespace: codepal-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+  - from:
+    - podSelector:
+        matchLabels:
+          app: codepal-frontend
+    ports:
+    - protocol: TCP
+      port: 3000
+  - from:
+    - podSelector:
+        matchLabels:
+          app: codepal-api
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# Pod Security Policy
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: codepal-psp
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+
+---
+# Security Context Constraints
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: codepal-scc
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegedContainer: false
+allowedCapabilities: null
+defaultAddCapabilities: null
+requiredDropCapabilities:
+- KILL
+- MKNOD
+- SETUID
+- SETGID
+fsGroup:
+  type: RunAsAny
+runAsUser:
+  type: MustRunAsNonRoot
+seLinuxContext:
+  type: MustRunAs
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+
+---
+# RBAC Configuration
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: codepal-production
+  name: codepal-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: codepal-rolebinding
+  namespace: codepal-production
+subjects:
+- kind: ServiceAccount
+  name: codepal-service-account
+  namespace: codepal-production
+roleRef:
+  kind: Role
+  name: codepal-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: codepal-service-account
+  namespace: codepal-production
+automountServiceAccountToken: false
+
+---
+# Falco Security Rules
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-rules
+  namespace: security
+data:
+  codepal_rules.yaml: |
+    - rule: Detect Shell in Container
+      desc: Detect shell execution in CodePal containers
+      condition: >
+        spawned_process and container and
+        (proc.name in (shell_binaries) or
+         proc.name in (bash, sh, zsh, fish))
+      output: >
+        Shell spawned in container (user=%user.name container=%container.name
+        image=%container.image.repository proc=%proc.cmdline)
+      priority: WARNING
+      tags: [container, shell]
+    
+    - rule: Detect Privilege Escalation
+      desc: Detect privilege escalation attempts
+      condition: >
+        spawned_process and container and
+        proc.name in (sudo, su, doas)
+      output: >
+        Privilege escalation attempt (user=%user.name container=%container.name
+        image=%container.image.repository proc=%proc.cmdline)
+      priority: CRITICAL
+      tags: [container, privilege_escalation]
+    
+    - rule: Detect Network Activity
+      desc: Detect unexpected network activity
+      condition: >
+        (inbound_outbound) and container and
+        not proc.name in (node, python, nginx, postgres, redis)
+      output: >
+        Unexpected network activity (user=%user.name container=%container.name
+        image=%container.image.repository connection=%fd.name)
+      priority: WARNING
+      tags: [network, container]
+
+---
+# OPA Gatekeeper Policies
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredsecuritycontext
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredSecurityContext
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            runAsNonRoot:
+              type: boolean
+            readOnlyRootFilesystem:
+              type: boolean
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredsecuritycontext
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.runAsNonRoot
+          msg := "Container must run as non-root user"
+        }
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.readOnlyRootFilesystem
+          msg := "Container must have read-only root filesystem"
+        }
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredSecurityContext
+metadata:
+  name: must-have-security-context
+spec:
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment"]
+    namespaces: ["codepal-production"]
+  parameters:
+    runAsNonRoot: true
+    readOnlyRootFilesystem: true

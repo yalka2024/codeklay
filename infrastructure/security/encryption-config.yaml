@@ -1,0 +1,294 @@
+# CodePal Security & Encryption Configuration
+# This file defines encryption policies for data at rest and in transit
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: encryption-config
+  namespace: codepal-prod
+data:
+  # Database Encryption Configuration
+  database-encryption.yaml: |
+    # PostgreSQL Encryption Settings
+    encryption:
+      at_rest:
+        enabled: true
+        algorithm: "AES-256-GCM"
+        key_rotation_days: 90
+        key_management: "aws-kms"
+        kms_key_id: "arn:aws:kms:us-east-1:123456789012:key/codepal-db-encryption"
+      
+      in_transit:
+        enabled: true
+        ssl_mode: "require"
+        ssl_cert_file: "/etc/ssl/certs/server.crt"
+        ssl_key_file: "/etc/ssl/private/server.key"
+        ssl_ca_file: "/etc/ssl/certs/ca.crt"
+        min_tls_version: "TLSv1.3"
+        cipher_suite: "ECDHE-RSA-AES256-GCM-SHA384"
+    
+    # Column-level encryption for sensitive data
+    column_encryption:
+      enabled: true
+      columns:
+        - table: "users"
+          column: "password_hash"
+          algorithm: "AES-256-GCM"
+        - table: "api_keys"
+          column: "key_value"
+          algorithm: "AES-256-GCM"
+        - table: "user_profiles"
+          column: "personal_data"
+          algorithm: "AES-256-GCM"
+        - table: "payment_info"
+          column: "card_number"
+          algorithm: "AES-256-GCM"
+        - table: "payment_info"
+          column: "cvv"
+          algorithm: "AES-256-GCM"
+
+  # Application Encryption Configuration
+  app-encryption.yaml: |
+    # Application-level encryption
+    encryption:
+      # JWT Token Encryption
+      jwt:
+        algorithm: "RS256"
+        key_size: 4096
+        expiration_hours: 24
+        refresh_expiration_days: 30
+        encryption_key: "${JWT_ENCRYPTION_KEY}"
+      
+      # Session Encryption
+      session:
+        algorithm: "AES-256-GCM"
+        key_rotation_hours: 12
+        secure_cookies: true
+        http_only: true
+        same_site: "strict"
+      
+      # File Upload Encryption
+      file_uploads:
+        enabled: true
+        algorithm: "AES-256-GCM"
+        key_management: "aws-kms"
+        storage_encryption: true
+        compression: true
+      
+      # API Communication
+      api:
+        tls_version: "1.3"
+        cipher_suites:
+          - "TLS_AES_256_GCM_SHA384"
+          - "TLS_CHACHA20_POLY1305_SHA256"
+        certificate_validation: true
+        hsts_enabled: true
+        hsts_max_age: 31536000
+
+  # Redis Encryption Configuration
+  redis-encryption.yaml: |
+    # Redis Encryption Settings
+    encryption:
+      at_rest:
+        enabled: true
+        algorithm: "AES-256-GCM"
+        key_rotation_days: 30
+      
+      in_transit:
+        enabled: true
+        ssl_mode: "require"
+        certificate_file: "/etc/redis/ssl/redis.crt"
+        key_file: "/etc/redis/ssl/redis.key"
+        ca_file: "/etc/redis/ssl/ca.crt"
+      
+      # Sensitive data encryption in Redis
+      sensitive_keys:
+        - pattern: "user:*:session"
+          algorithm: "AES-256-GCM"
+        - pattern: "api:*:token"
+          algorithm: "AES-256-GCM"
+        - pattern: "payment:*:data"
+          algorithm: "AES-256-GCM"
+
+  # Storage Encryption Configuration
+  storage-encryption.yaml: |
+    # S3 and File Storage Encryption
+    storage:
+      s3:
+        encryption:
+          algorithm: "AES-256"
+          sse_algorithm: "aws:kms"
+          kms_key_id: "arn:aws:kms:us-east-1:123456789012:key/codepal-storage"
+          bucket_key_enabled: true
+        
+        # Lifecycle policies for encrypted data
+        lifecycle:
+          - id: "encrypted-data-retention"
+            status: "Enabled"
+            filter:
+              prefix: "encrypted/"
+            transitions:
+              - days: 30
+                storage_class: "STANDARD_IA"
+              - days: 90
+                storage_class: "GLACIER"
+            expiration:
+              days: 2555  # 7 years for compliance
+    
+    # Local Storage Encryption
+    local_storage:
+      encryption:
+        enabled: true
+        algorithm: "AES-256-GCM"
+        key_derivation: "PBKDF2"
+        iterations: 100000
+
+  # Network Encryption Configuration
+  network-encryption.yaml: |
+    # Network Security Configuration
+    network:
+      # TLS Configuration
+      tls:
+        min_version: "1.3"
+        max_version: "1.3"
+        cipher_suites:
+          - "TLS_AES_256_GCM_SHA384"
+          - "TLS_CHACHA20_POLY1305_SHA256"
+        curve_preferences:
+          - "X25519"
+          - "P-256"
+          - "P-384"
+      
+      # VPN Configuration
+      vpn:
+        enabled: true
+        protocol: "WireGuard"
+        encryption: "ChaCha20-Poly1305"
+        key_exchange: "X25519"
+      
+      # Service Mesh Encryption
+      service_mesh:
+        enabled: true
+        mTLS: true
+        certificate_rotation: true
+        trust_domain: "codepal.com"
+
+---
+# Encryption Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: encryption-secrets
+  namespace: codepal-prod
+type: Opaque
+data:
+  # Base64 encoded encryption keys (replace with actual keys)
+  database-encryption-key: "{{ base64_encoded_database_key }}"
+  jwt-encryption-key: "{{ base64_encoded_jwt_key }}"
+  session-encryption-key: "{{ base64_encoded_session_key }}"
+  file-encryption-key: "{{ base64_encoded_file_key }}"
+  redis-encryption-key: "{{ base64_encoded_redis_key }}"
+  
+  # KMS Configuration
+  aws-kms-config: |
+    {
+      "region": "us-east-1",
+      "key_ids": {
+        "database": "arn:aws:kms:us-east-1:123456789012:key/codepal-db-encryption",
+        "storage": "arn:aws:kms:us-east-1:123456789012:key/codepal-storage",
+        "session": "arn:aws:kms:us-east-1:123456789012:key/codepal-session"
+      }
+    }
+
+---
+# Encryption Policy
+apiVersion: policy/v1
+kind: PodSecurityPolicy
+metadata:
+  name: encryption-policy
+  namespace: codepal-prod
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'secret'
+    - 'emptyDir'
+    - 'projected'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: true
+
+---
+# Network Policy for Encrypted Communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: encrypted-communication-policy
+  namespace: codepal-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: codepal-app
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - podSelector:
+            matchLabels:
+              app: auth-service
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-service
+      ports:
+        - protocol: TCP
+          port: 3000
+    - ports:
+        - protocol: TCP
+          port: 443
+      to: []
+      # Allow HTTPS outbound for external APIs 

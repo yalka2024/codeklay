@@ -1,0 +1,378 @@
+groups:
+  - name: codepal-app-alerts
+    rules:
+      # Application Health Alerts
+      - alert: CodePalAppDown
+        expr: up{job="codepal-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "CodePal application is down"
+          description: "CodePal application has been down for more than 1 minute"
+
+      - alert: CodePalAppHighErrorRate
+        expr: rate(http_requests_total{job="codepal-app", status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second"
+
+      - alert: CodePalAppHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="codepal-app"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is {{ $value }} seconds"
+
+      # Database Alerts
+      - alert: DatabaseConnectionHigh
+        expr: pg_stat_database_numbackends{job="postgres"} > 80
+        for: 2m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High database connections"
+          description: "Database has {{ $value }} active connections"
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration{job="postgres"}[5m]) > 30
+        for: 1m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Average query duration is {{ $value }} seconds"
+
+      - alert: DatabaseDiskSpaceHigh
+        expr: (pg_database_size_bytes{job="postgres"} / pg_database_size_bytes{job="postgres"} offset 1h) > 1.1
+        for: 10m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Database disk space growing rapidly"
+          description: "Database size increased by {{ $value }}% in the last hour"
+
+      # Redis Alerts
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes{job="redis"} / redis_memory_max_bytes{job="redis"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis is using {{ $value | humanizePercentage }} of available memory"
+
+      - alert: RedisConnectionsHigh
+        expr: redis_connected_clients{job="redis"} > 100
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High Redis connections"
+          description: "Redis has {{ $value }} connected clients"
+
+      # Kubernetes Alerts
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Pod is crash looping"
+          description: "Pod {{ $labels.pod }} is restarting {{ $value }} times / 5 minutes"
+
+      - alert: PodNotReady
+        expr: kube_pod_status_phase{phase!="Running"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Pod is not ready"
+          description: "Pod {{ $labels.pod }} is in {{ $labels.phase }} state"
+
+      - alert: NodeHighCPU
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage on node"
+          description: "CPU usage on {{ $labels.instance }} is {{ $value }}%"
+
+      - alert: NodeHighMemory
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage on node"
+          description: "Memory usage on {{ $labels.instance }} is {{ $value }}%"
+
+      - alert: NodeDiskSpaceHigh
+        expr: (node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High disk usage on node"
+          description: "Disk usage on {{ $labels.instance }} is {{ $value }}%"
+
+      # Network Alerts
+      - alert: HighNetworkErrors
+        expr: rate(node_network_receive_errs_total[5m]) + rate(node_network_transmit_errs_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High network error rate"
+          description: "Network error rate is {{ $value }} errors per second"
+
+      # Ingress Alerts
+      - alert: IngressHighErrorRate
+        expr: rate(nginx_ingress_controller_nginx_process_requests_total{status=~"5.."}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High ingress error rate"
+          description: "Ingress error rate is {{ $value }} errors per second"
+
+      - alert: IngressHighLatency
+        expr: histogram_quantile(0.95, rate(nginx_ingress_controller_nginx_process_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High ingress latency"
+          description: "95th percentile ingress latency is {{ $value }} seconds"
+
+      # External Service Alerts
+      - alert: ExternalServiceDown
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "External service is down"
+          description: "Service {{ $labels.instance }} is not responding"
+
+      - alert: DNSError
+        expr: probe_success{job="blackbox-dns"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "DNS resolution failed"
+          description: "DNS resolution for {{ $labels.instance }} failed"
+
+      # AI Service Alerts
+      - alert: AIServiceDown
+        expr: up{job="ai-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "AI service is down"
+          description: "AI service has been down for more than 1 minute"
+
+      - alert: AIServiceHighLatency
+        expr: histogram_quantile(0.95, rate(ai_request_duration_seconds_bucket{job="ai-service"}[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "AI service high latency"
+          description: "95th percentile AI request latency is {{ $value }} seconds"
+
+      - alert: AIServiceQuotaExceeded
+        expr: ai_requests_total{job="ai-service", status="quota_exceeded"} > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "AI service quota exceeded"
+          description: "AI service quota has been exceeded"
+
+      # Auth Service Alerts
+      - alert: AuthServiceDown
+        expr: up{job="auth-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Auth service is down"
+          description: "Auth service has been down for more than 1 minute"
+
+      - alert: AuthServiceHighErrorRate
+        expr: rate(auth_requests_total{job="auth-service", status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "High auth service error rate"
+          description: "Auth service error rate is {{ $value }} errors per second"
+
+      # Backup Alerts
+      - alert: BackupFailed
+        expr: backup_status{job="backup-metrics", status="failed"} > 0
+        for: 1h
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "Database backup failed"
+          description: "Database backup has failed"
+
+      - alert: BackupTooOld
+        expr: time() - backup_last_success_timestamp{job="backup-metrics"} > 86400
+        for: 1h
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Backup is too old"
+          description: "Last successful backup was more than 24 hours ago"
+
+      # Replication Alerts
+      - alert: ReplicationLag
+        expr: replication_lag_seconds{job="replication-metrics"} > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High replication lag"
+          description: "Replication lag is {{ $value }} seconds"
+
+      - alert: ReplicationDown
+        expr: up{job="replication-metrics"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "Replication service is down"
+          description: "Replication service has been down for more than 1 minute"
+
+      # Security Alerts
+      - alert: HighFailedLogins
+        expr: rate(auth_failed_logins_total{job="auth-service"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High number of failed logins"
+          description: "{{ $value }} failed logins per second detected"
+
+      - alert: SuspiciousActivity
+        expr: rate(auth_suspicious_activity_total{job="auth-service"}[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "{{ $value }} suspicious activities per second detected"
+
+      # Business Metrics Alerts
+      - alert: LowUserActivity
+        expr: rate(user_activity_total{job="codepal-app"}[1h]) < 1
+        for: 30m
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: "Low user activity"
+          description: "User activity is below normal levels"
+
+      - alert: HighAPIUsage
+        expr: rate(api_requests_total{job="codepal-app"}[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High API usage"
+          description: "API usage is {{ $value }} requests per second"
+
+      # Cost Alerts
+      - alert: HighCost
+        expr: aws_billing_estimated_charges_usd > 1000
+        for: 1h
+        labels:
+          severity: warning
+          team: finance
+        annotations:
+          summary: "High AWS costs"
+          description: "AWS costs are {{ $value }} USD"
+
+      # Certificate Alerts
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+      # Custom Application Alerts
+      - alert: PluginSystemError
+        expr: rate(plugin_errors_total{job="codepal-app"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Plugin system errors"
+          description: "Plugin system error rate is {{ $value }} errors per second"
+
+      - alert: VectorSearchError
+        expr: rate(vector_search_errors_total{job="ai-service"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "Vector search errors"
+          description: "Vector search error rate is {{ $value }} errors per second"
+
+      - alert: FileUploadError
+        expr: rate(file_upload_errors_total{job="codepal-app"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "File upload errors"
+          description: "File upload error rate is {{ $value }} errors per second" 
