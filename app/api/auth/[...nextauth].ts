@@ -16,6 +16,7 @@ type SessionUser = {
   image?: string | null;
   id?: string;
   role?: string;
+  subscription_tier?: string;
 };
 
 export const authOptions: NextAuthOptions = {
@@ -135,12 +136,14 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as SessionUser).id = token.sub;
         (session.user as SessionUser).role = token.role;
+        (session.user as SessionUser).subscription_tier = token.subscription_tier;
       }
       return session;
     },
     async jwt({ token, user }: { token: any; user?: NextAuthUser }) {
       if (user) {
         token.role = (user as any).role;
+        token.subscription_tier = (user as any).subscriptionTier;
       }
       return token;
     },
@@ -153,4 +156,4 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST }; 
+export { handler as GET, handler as POST };    

@@ -20,6 +20,10 @@ model User {
   emailVerified DateTime?
   image         String?
   role          String   @default("user")
+  subscriptionTier String @default("free")
+  subscriptionStatus String @default("active")
+  stripeCustomerId String?
+  stripeSubscriptionId String?
   hashedPassword String?
   mfaSecret     String?
   mfaEnabled    Boolean  @default(false)

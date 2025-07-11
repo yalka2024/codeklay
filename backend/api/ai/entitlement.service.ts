@@ -1,11 +1,27 @@
 // EntitlementService: checks AI quota, plugin count, and collab feature access for user tiers
-// In-memory store for demo; replace with DB in production
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 const aiUsage: Record<string, { month: string; count: number }> = {};
 const pluginCounts: Record<string, number> = {};
 
 export class EntitlementService {
-  static getTier(user: { subscription_tier?: string }) {
-    return user.subscription_tier || 'free';
+  static async getTier(userId: string): Promise<string> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { subscriptionTier: true, subscriptionStatus: true }
+      });
+      
+      if (!user || user.subscriptionStatus !== 'active') {
+        return 'free';
+      }
+      
+      return user.subscriptionTier || 'free';
+    } catch (error) {
+      console.error('Error fetching user tier:', error);
+      return 'free';
+    }
   }
 
   static getAIQuota(tier: string) {
@@ -15,13 +31,19 @@ export class EntitlementService {
     return 0;
   }
 
-  static checkAIQuota(userId: string, tier: string) {
+  static async checkAIQuota(userId: string): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+    const tier = await this.getTier(userId);
     const month = new Date().toISOString().slice(0, 7);
     if (!aiUsage[userId] || aiUsage[userId].month !== month) {
       aiUsage[userId] = { month, count: 0 };
     }
     const quota = this.getAIQuota(tier);
-    return aiUsage[userId].count < quota;
+    const remaining = Math.max(0, quota - aiUsage[userId].count);
+    return { 
+      allowed: aiUsage[userId].count < quota, 
+      remaining, 
+      limit: quota 
+    };
   }
 
   static incrementAIUsage(userId: string) {
@@ -39,16 +61,23 @@ export class EntitlementService {
     return 0;
   }
 
-  static checkPluginLimit(userId: string, tier: string) {
+  static async checkPluginLimit(userId: string): Promise<{ allowed: boolean; current: number; limit: number }> {
+    const tier = await this.getTier(userId);
     const count = pluginCounts[userId] || 0;
-    return count < this.getPluginLimit(tier);
+    const limit = this.getPluginLimit(tier);
+    return { 
+      allowed: count < limit, 
+      current: count, 
+      limit 
+    };
   }
 
   static setPluginCount(userId: string, count: number) {
     pluginCounts[userId] = count;
   }
 
-  static canAccessAdvancedCollab(tier: string) {
+  static async canAccessAdvancedCollab(userId: string): Promise<boolean> {
+    const tier = await this.getTier(userId);
     return tier !== 'free';
   }
-} 
+}
