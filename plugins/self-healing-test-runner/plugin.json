@@ -1,0 +1,8 @@
+{
+  "id": "self-healing-test-runner",
+  "name": "Self-Healing Test Runner",
+  "version": "1.0.0",
+  "description": "Automatically fixes failing tests using AI.",
+  "main": "index.js",
+  "category": "testing"
+} 

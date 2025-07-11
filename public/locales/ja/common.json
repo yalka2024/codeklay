@@ -1,0 +1,13 @@
+{
+  "welcome": "CodePalへようこそ！",
+  "login": "ログイン",
+  "logout": "ログアウト",
+  "dashboard": "ダッシュボード",
+  "settings": "設定",
+  "language": "言語",
+  "onboarding_title": "CodePalの使い方を始めましょう",
+  "onboarding_step1": "プロジェクトを作成または参加します。",
+  "onboarding_step2": "チームを招待します。",
+  "onboarding_step3": "AI搭載ツールを探索します。",
+  "onboarding_complete": "準備完了です！"
+} 

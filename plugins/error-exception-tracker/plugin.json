@@ -1,0 +1,8 @@
+{
+  "id": "error-exception-tracker",
+  "name": "Error/Exception Tracker",
+  "version": "1.0.0",
+  "description": "Tracks and reports errors and exceptions in the app.",
+  "main": "index.js",
+  "category": "analytics"
+} 

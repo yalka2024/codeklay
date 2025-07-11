@@ -1,0 +1,8 @@
+{
+  "id": "infrastructure-drift-detector",
+  "name": "Infrastructure Drift Detector",
+  "version": "1.0.0",
+  "description": "Detects drift between infrastructure code and deployed state.",
+  "main": "index.js",
+  "category": "devops"
+} 

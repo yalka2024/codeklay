@@ -1,0 +1,8 @@
+{
+  "id": "ai-code-formatter",
+  "name": "AI Code Formatter",
+  "version": "1.0.0",
+  "description": "Formats and lints code using AI suggestions.",
+  "main": "index.js",
+  "category": "productivity"
+} 

@@ -1,0 +1,182 @@
+groups:
+  - name: codepal-alerts
+    rules:
+      # --- Application Health ---
+      - alert: CodePalAppDown
+        expr: up{job="codepal-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CodePal application is down"
+          description: "CodePal application has been down for more than 1 minute"
+
+      - alert: CodePalWebSocketDown
+        expr: up{job="codepal-websocket"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CodePal WebSocket server is down"
+          description: "WebSocket server has been down for more than 1 minute"
+
+      # --- Performance Alerts ---
+      - alert: HighResponseTime
+        expr: http_request_duration_seconds{quantile="0.95"} > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 2 seconds"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for the last 2 minutes"
+
+      # --- Resource Usage ---
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for more than 5 minutes"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 85% for more than 5 minutes"
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage is above 85% for more than 5 minutes"
+
+      # --- Database Alerts ---
+      - alert: DatabaseConnectionHigh
+        expr: pg_stat_database_numbackends > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections"
+          description: "Database has more than 80 active connections"
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration[5m]) > 30
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Database queries are taking longer than 30 seconds"
+
+      # --- Security Alerts ---
+      - alert: HighFailedLogins
+        expr: rate(codepal_failed_logins_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of failed login attempts"
+          description: "More than 10 failed login attempts per minute"
+
+      - alert: BruteForceAttempt
+        expr: rate(codepal_brute_force_blocks_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Brute force attack detected"
+          description: "Multiple brute force attempts detected"
+
+      # --- Business Metrics ---
+      - alert: LowActiveUsers
+        expr: codepal_active_users < 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low active users"
+          description: "Active users dropped below 10 for more than 10 minutes"
+
+      - alert: HighAPIUsage
+        expr: rate(codepal_api_requests_total[5m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API usage detected"
+          description: "API requests are above 1000 per minute"
+
+      # --- WebSocket Alerts ---
+      - alert: WebSocketHighConnections
+        expr: codepal_websocket_connections > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High WebSocket connections"
+          description: "More than 1000 active WebSocket connections"
+
+      - alert: WebSocketHighLatency
+        expr: codepal_websocket_latency_seconds > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High WebSocket latency"
+          description: "WebSocket latency is above 1 second"
+
+      # --- Infrastructure Alerts ---
+      - alert: PodRestartingFrequently
+        expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod restarting frequently"
+          description: "Pod has restarted more than 5 times in the last hour"
+
+      - alert: NodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kubernetes node not ready"
+          description: "A Kubernetes node is not ready"
+
+      # --- Custom CodePal Metrics ---
+      - alert: AIFeatureHighUsage
+        expr: rate(codepal_ai_requests_total[5m]) > 100
+        for: 2m
+        labels:
+          severity: info
+        annotations:
+          summary: "High AI feature usage"
+          description: "AI features are being used more than 100 times per minute"
+
+      - alert: CollaborationRoomOverload
+        expr: codepal_collaboration_rooms_active > 500
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of active collaboration rooms"
+          description: "More than 500 active collaboration rooms" 

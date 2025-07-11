@@ -1,0 +1,13 @@
+{
+  "welcome": "Bienvenue sur CodePal !",
+  "login": "Connexion",
+  "logout": "Déconnexion",
+  "dashboard": "Tableau de bord",
+  "settings": "Paramètres",
+  "language": "Langue",
+  "onboarding_title": "Commencez avec CodePal",
+  "onboarding_step1": "Créez ou rejoignez un projet.",
+  "onboarding_step2": "Invitez votre équipe.",
+  "onboarding_step3": "Découvrez les outils alimentés par l'IA.",
+  "onboarding_complete": "Tout est prêt !"
+} 

@@ -1,0 +1,8 @@
+{
+  "id": "real-time-code-review",
+  "name": "Real-Time Code Review Assistant",
+  "version": "1.0.0",
+  "description": "Provides live AI-powered code review suggestions.",
+  "main": "index.js",
+  "category": "collaboration"
+} 

@@ -1,0 +1,8 @@
+{
+  "id": "team-presence",
+  "name": "Team Presence Plugin",
+  "version": "1.0.0",
+  "description": "Shows real-time team presence and availability.",
+  "main": "index.js",
+  "category": "collaboration"
+} 

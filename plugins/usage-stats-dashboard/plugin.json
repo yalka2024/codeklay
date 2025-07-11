@@ -1,0 +1,8 @@
+{
+  "id": "usage-stats-dashboard",
+  "name": "Usage Stats Dashboard",
+  "version": "1.0.0",
+  "description": "Displays usage statistics and analytics.",
+  "main": "index.js",
+  "category": "analytics"
+} 

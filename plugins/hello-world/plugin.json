@@ -1,0 +1,8 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "version": "1.0.0",
+  "description": "A simple CodePal plugin example.",
+  "main": "index.js",
+  "category": "productivity"
+} 
