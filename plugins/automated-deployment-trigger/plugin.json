@@ -1,0 +1,8 @@
+{
+  "id": "automated-deployment-trigger",
+  "name": "Automated Deployment Trigger",
+  "version": "1.0.0",
+  "description": "Triggers deployments automatically on code changes.",
+  "main": "index.js",
+  "category": "ci-cd"
+} 

@@ -1,0 +1,266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String
+  name              String?
+  githubUsername    String?
+  avatar            String?
+  skillLevel        String   @default("beginner")
+  preferredLanguages String   @default("javascript,typescript")
+  reputation        Int      @default(0)
+  earnings          Float    @default(0)
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  ownedProjects     Project[] @relation("ProjectOwner")
+  collaborations    ProjectCollaborator[]
+  codeSnippets      CodeSnippet[]
+  snippetPurchases  SnippetPurchase[]
+  snippetReviews    SnippetReview[]
+  chatMessages      ChatMessage[]
+  codeUpdates       CodeUpdate[]
+  userPresence      UserPresence[]
+  fileOperations    FileOperation[]
+  learningPaths     LearningPath[]
+  progressTrackers  ProgressTracker[]
+  achievements      Achievement[]
+  paymentIntents    PaymentIntent[]
+
+  @@map("users")
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  currentCode   String?
+  language      String   @default("javascript")
+  isPublic      Boolean  @default(false)
+  lastUpdated   DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  // Relations
+  ownerId       String
+  owner         User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  collaborators ProjectCollaborator[]
+  codeUpdates   CodeUpdate[]
+  chatMessages  ChatMessage[]
+  userPresence  UserPresence[]
+  fileOperations FileOperation[]
+
+  @@map("projects")
+}
+
+model ProjectCollaborator {
+  id        String   @id @default(cuid())
+  role      String   @default("member")
+  joinedAt  DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_collaborators")
+}
+
+model CodeUpdate {
+  id        String   @id @default(cuid())
+  code      String
+  cursor    String?
+  timestamp DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("code_updates")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  message   String
+  timestamp DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model UserPresence {
+  id        String   @id @default(cuid())
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@map("user_presence")
+}
+
+model FileOperation {
+  id        String   @id @default(cuid())
+  operation String
+  filePath  String
+  newPath   String?
+  timestamp DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("file_operations")
+}
+
+model CodeSnippet {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  code          String
+  language      String
+  category      String?
+  tags          String   @default("")
+  price         Float    @default(0)
+  isPublic      Boolean  @default(true)
+  isVerified    Boolean  @default(false)
+  trustScore    Int      @default(50)
+  averageRating Float    @default(0)
+  downloadCount Int      @default(0)
+  aiAnalysis    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  purchases     SnippetPurchase[]
+  reviews       SnippetReview[]
+  paymentIntents PaymentIntent[]
+
+  @@map("code_snippets")
+}
+
+model SnippetPurchase {
+  id            String   @id @default(cuid())
+  amount        Float
+  transactionId String   @unique
+  timestamp     DateTime @default(now())
+
+  // Relations
+  snippetId     String
+  snippet       CodeSnippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, snippetId])
+  @@map("snippet_purchases")
+}
+
+model SnippetReview {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  snippetId String
+  snippet   CodeSnippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, snippetId])
+  @@map("snippet_reviews")
+}
+
+model PaymentIntent {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snippetId     String
+  snippet       CodeSnippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  amount        Float
+  currency      String
+  status        String
+  clientSecret  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("payment_intents")
+}
+
+model LearningPath {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  difficulty  String
+  estimatedDuration Int
+  progress    Int      @default(0)
+  completedModules String   @default("")
+  currentModule String?
+  startDate   DateTime @default(now())
+  targetCompletionDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("learning_paths")
+}
+
+model ProgressTracker {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningPaths String   @default("")
+  skillImprovements String
+  achievements String
+  streak       Int      @default(0)
+  totalTimeSpent Int   @default(0)
+  lastActivity DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("progress_trackers")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  type        String
+  earnedDate  DateTime @default(now())
+  icon        String
+  points      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("achievements")
+} 

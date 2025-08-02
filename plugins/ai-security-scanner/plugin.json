@@ -1,0 +1,8 @@
+{
+  "id": "ai-security-scanner",
+  "name": "AI Security Scanner",
+  "version": "1.0.0",
+  "description": "Scans code for security vulnerabilities using AI.",
+  "main": "index.js",
+  "category": "security"
+} 

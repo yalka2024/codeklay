@@ -1,0 +1,8 @@
+{
+  "id": "test-coverage-visualizer",
+  "name": "Test Coverage Visualizer",
+  "version": "1.0.0",
+  "description": "Visualizes test coverage in the codebase.",
+  "main": "index.js",
+  "category": "testing"
+} 

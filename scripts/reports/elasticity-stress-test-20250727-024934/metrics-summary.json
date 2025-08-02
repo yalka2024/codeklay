@@ -1,0 +1,47 @@
+﻿{
+    "validation_metrics":  {
+                               "autoscaling":  {
+                                                   "redis_throughput_threshold":  10000,
+                                                   "ecs_cpu_threshold":  70,
+                                                   "ecs_memory_threshold":  80,
+                                                   "vercel_response_threshold":  2000,
+                                                   "postgresql_lag_threshold":  1000
+                                               },
+                               "error_recovery":  {
+                                                      "retry_accuracy_threshold":  95,
+                                                      "cache_hit_threshold":  80,
+                                                      "handoff_failure_threshold":  5,
+                                                      "zod_errors_threshold":  1
+                                                  },
+                               "observability":  {
+                                                     "grafana_refresh_threshold":  5,
+                                                     "prometheus_response_threshold":  30,
+                                                     "datadog_completion_threshold":  95,
+                                                     "cloudflare_execution_threshold":  100
+                                                 },
+                               "latency":  {
+                                               "handoff_latency_threshold":  1000,
+                                               "p95_response_threshold":  250,
+                                               "frontend_idle_threshold":  100,
+                                               "p99_response_threshold":  500
+                                           },
+                               "agent_audit":  {
+                                                   "meta_agent":  {
+                                                                      "queue_throughput_threshold":  1000,
+                                                                      "deconfliction_threshold":  95,
+                                                                      "handoff_delay_threshold":  500
+                                                                  },
+                                                   "cross_platform_agent":  {
+                                                                                "dom_mutation_threshold":  50,
+                                                                                "uplift_delta_threshold":  10,
+                                                                                "adaptation_latency_threshold":  200
+                                                                            }
+                                               }
+                           },
+    "test_configuration":  {
+                               "duration":  60,
+                               "environment":  "local",
+                               "test_date":  "2025-07-27T02:49:35",
+                               "concurrent_users":  10
+                           }
+}

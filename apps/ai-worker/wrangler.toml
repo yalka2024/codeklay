@@ -1,0 +1,33 @@
+name = "codepal-ai-worker"
+main = "worker.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+# Environment variables (set these in Cloudflare dashboard)
+# DEEPSEEK_API_KEY = "your-deepseek-api-key"
+# OPENAI_SECRET_KEY = "your-openai-api-key"
+
+# KV namespaces (if needed for caching)
+# [[kv_namespaces]]
+# binding = "AI_CACHE"
+# id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-namespace-id"
+
+# Durable Objects (if needed for state management)
+# [[durable_objects.bindings]]
+# name = "AI_SESSION"
+# class_name = "AISession"
+
+# R2 storage (if needed for file storage)
+# [[r2_buckets]]
+# binding = "AI_STORAGE"
+# bucket_name = "codepal-ai-storage"
+
+[triggers]
+crons = ["0 */6 * * *"] # Run every 6 hours for maintenance tasks 

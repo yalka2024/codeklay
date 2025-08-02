@@ -1,0 +1,496 @@
+﻿// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String
+  name              String?
+  githubUsername    String?
+  avatar            String?
+  skillLevel        String   @default("beginner")
+  preferredLanguages String[] @default(["javascript", "typescript"])
+  reputation        Int      @default(0)
+  earnings          Float    @default(0)
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  ownedProjects     Project[] @relation("ProjectOwner")
+  collaborations    ProjectCollaborator[]
+  codeSnippets      CodeSnippet[]
+  snippetPurchases  SnippetPurchase[]
+  snippetReviews    SnippetReview[]
+  chatMessages      ChatMessage[]
+  codeUpdates       CodeUpdate[]
+  userPresence      UserPresence[]
+  fileOperations    FileOperation[]
+  learningPaths     LearningPath[]
+  progressTrackers  ProgressTracker[]
+  achievements      Achievement[]
+  paymentIntents    PaymentIntent[]
+  blockchainPods    BlockchainPod[] @relation("PodOwner")
+
+  @@map("users")
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  currentCode   String?
+  language      String   @default("javascript")
+  isPublic      Boolean  @default(false)
+  lastUpdated   DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  // Relations
+  ownerId       String
+  owner         User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  collaborators ProjectCollaborator[]
+  codeUpdates   CodeUpdate[]
+  chatMessages  ChatMessage[]
+  userPresence  UserPresence[]
+  fileOperations FileOperation[]
+
+  @@map("projects")
+}
+
+model ProjectCollaborator {
+  id        String   @id @default(cuid())
+  role      String   @default("member") // owner, admin, member, viewer
+  joinedAt  DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_collaborators")
+}
+
+model CodeUpdate {
+  id        String   @id @default(cuid())
+  code      String
+  cursor    String?  // JSON string of cursor position
+  timestamp DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("code_updates")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  message   String
+  timestamp DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model UserPresence {
+  id        String   @id @default(cuid())
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@map("user_presence")
+}
+
+model FileOperation {
+  id        String   @id @default(cuid())
+  operation String   // create, delete, rename
+  filePath  String
+  newPath   String?
+  timestamp DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("file_operations")
+}
+
+// Marketplace models
+model CodeSnippet {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  code          String
+  language      String
+  category      String?
+  tags          String[]
+  price         Float    @default(0)
+  isPublic      Boolean  @default(true)
+  isVerified    Boolean  @default(false)
+  trustScore    Int      @default(50)
+  averageRating Float    @default(0)
+  downloadCount Int      @default(0)
+  aiAnalysis    String?  // JSON string of AI analysis
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  purchases     SnippetPurchase[]
+  reviews       SnippetReview[]
+  paymentIntents PaymentIntent[]
+
+  @@map("code_snippets")
+}
+
+model SnippetPurchase {
+  id            String   @id @default(cuid())
+  amount        Float
+  transactionId String   @unique
+  timestamp     DateTime @default(now())
+
+  // Relations
+  snippetId     String
+  snippet       CodeSnippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, snippetId])
+  @@map("snippet_purchases")
+}
+
+model SnippetReview {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5 stars
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  snippetId String
+  snippet   CodeSnippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, snippetId])
+  @@map("snippet_reviews")
+}
+
+// AI Learning models
+model Tutorial {
+  id             String   @id @default(cuid())
+  title          String
+  content        String
+  difficulty     Int      // 1-5
+  language       String
+  estimatedTime  Int      // in minutes
+  prerequisites  String[]
+  tags           String[]
+  isPublished    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  completions    TutorialCompletion[]
+
+  @@map("tutorials")
+}
+
+model TutorialCompletion {
+  id         String   @id @default(cuid())
+  completedAt DateTime @default(now())
+  score      Int?     // 0-100
+
+  // Relations
+  tutorialId String
+  tutorial   Tutorial @relation(fields: [tutorialId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tutorialId, userId])
+  @@map("tutorial_completions")
+}
+
+model Exercise {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  starterCode  String
+  solution     String
+  hints        String[]
+  difficulty   Int      // 1-5
+  language     String
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  completions  ExerciseCompletion[]
+
+  @@map("exercises")
+}
+
+model ExerciseCompletion {
+  id         String   @id @default(cuid())
+  completedAt DateTime @default(now())
+  score      Int?     // 0-100
+  attempts   Int      @default(1)
+
+  // Relations
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, userId])
+  @@map("exercise_completions")
+}
+
+// Analytics models
+model UserAnalytics {
+  id                    String   @id @default(cuid())
+  totalCodeLines        Int      @default(0)
+  totalProjects         Int      @default(0)
+  totalContributions    Int      @default(0)
+  averageCodeQuality    Float    @default(0)
+  languagesUsed         String[]
+  lastActive            DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_analytics")
+}
+
+model ProjectAnalytics {
+  id                String   @id @default(cuid())
+  totalContributors Int      @default(0)
+  totalCommits      Int      @default(0)
+  totalLines        Int      @default(0)
+  averageQuality    Float    @default(0)
+  lastActivity      DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  projectId         String   @unique
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_analytics")
+}
+
+// --- AI Learning Engine Extensions ---
+model LearningPath {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  difficulty  String   // beginner, intermediate, advanced
+  estimatedDuration Int // hours
+  progress    Int      @default(0)
+  completedModules String[]
+  currentModule String?
+  startDate   DateTime @default(now())
+  targetCompletionDate DateTime
+  modules     LearningModule[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("learning_paths")
+}
+
+model LearningModule {
+  id          String   @id @default(cuid())
+  pathId      String
+  learningPath LearningPath @relation(fields: [pathId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  type        String   // tutorial, exercise, project, assessment
+  difficulty  Int
+  estimatedTime Int    // minutes
+  prerequisites String[]
+  content      String  // JSON
+  exercises    String  // JSON
+  assessment   String  // JSON
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("learning_modules")
+}
+
+model ProgressTracker {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningPaths String[]
+  skillImprovements String // JSON
+  achievements String // JSON
+  streak       Int      @default(0)
+  totalTimeSpent Int   @default(0)
+  lastActivity DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("progress_trackers")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  type        String   // streak, completion, skill, social
+  earnedDate  DateTime @default(now())
+  icon        String
+  points      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("achievements")
+}
+
+// --- Marketplace Extensions ---
+model MarketplaceStats {
+  id              String   @id @default(cuid())
+  totalSnippets   Int      @default(0)
+  totalDownloads  Int      @default(0)
+  totalRevenue    Float    @default(0)
+  activeAuthors   Int      @default(0)
+  averageRating   Float    @default(0)
+  topCategories   String   // JSON
+  topLanguages    String   // JSON
+  recentActivity  String   // JSON
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("marketplace_stats")
+}
+
+model PaymentIntent {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snippetId     String
+  snippet       CodeSnippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  amount        Float
+  currency      String
+  status        String
+  clientSecret  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("payment_intents")
+}
+
+// --- Blockchain Integration ---
+model BlockchainPod {
+  id              String   @id @default(cuid())
+  name            String
+  description     String
+  ownerId         String
+  owner           User     @relation("PodOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberIds       String[] // Array of user IDs
+  contractAddress String
+  tokenSymbol     String
+  totalSupply     String
+  treasuryBalance String   @default("0")
+  proposalCount   Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  proposals       Proposal[]
+  rewards         TokenReward[]
+
+  @@map("blockchain_pods")
+}
+
+model Proposal {
+  id            String   @id @default(cuid())
+  podId         String
+  pod           BlockchainPod @relation(fields: [podId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  proposerId    String
+  proposalType  String   // REWARD_DISTRIBUTION, MEMBER_ADD, MEMBER_REMOVE, TREASURY_SPEND, CODE_REVIEW
+  targetAddress String?
+  amount        String?
+  codeSnippetId String?
+  status        String   @default("ACTIVE") // ACTIVE, APPROVED, REJECTED, EXPIRED
+  votesFor      Int      @default(0)
+  votesAgainst  Int      @default(0)
+  quorum        Int
+  endTime       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  votes         Vote[]
+  rewards       TokenReward[]
+
+  @@map("proposals")
+}
+
+model Vote {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  voterId     String
+  vote        String   // FOR, AGAINST
+  votingPower String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@unique([proposalId, voterId])
+  @@map("votes")
+}
+
+model TokenReward {
+  id            String   @id @default(cuid())
+  podId         String
+  pod           BlockchainPod @relation(fields: [podId], references: [id], onDelete: Cascade)
+  recipientId   String
+  amount        String
+  reason        String   // CODE_CONTRIBUTION, CODE_REVIEW, BUG_FIX, FEATURE_IMPLEMENTATION, DOCUMENTATION, TESTING
+  codeSnippetId String?
+  proposalId    String?
+  proposal      Proposal? @relation(fields: [proposalId], references: [id])
+  transactionHash String?
+  status        String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  createdAt     DateTime @default(now())
+  processedAt   DateTime?
+
+  @@map("token_rewards")
+}

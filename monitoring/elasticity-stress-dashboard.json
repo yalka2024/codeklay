@@ -1,0 +1,543 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "CodePal Elasticity Stress Test Dashboard",
+    "tags": ["codepal", "elasticity", "stress-test", "load-testing"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Autoscaling Behavior",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg(ecs_cpu_utilization)",
+            "legendFormat": "ECS CPU Utilization"
+          },
+          {
+            "expr": "avg(ecs_memory_utilization)",
+            "legendFormat": "ECS Memory Utilization"
+          },
+          {
+            "expr": "avg(vercel_response_time)",
+            "legendFormat": "Vercel Response Time"
+          },
+          {
+            "expr": "avg(redis_throughput)",
+            "legendFormat": "Redis Throughput"
+          },
+          {
+            "expr": "avg(postgresql_replica_lag)",
+            "legendFormat": "PostgreSQL Replica Lag"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "displayMode": "list",
+              "orientation": "horizontal"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 70},
+                {"color": "red", "value": 90}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Error Recovery Metrics",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(agent_handoff_failure_rate[5m])",
+            "legendFormat": "Agent Handoff Failure Rate"
+          },
+          {
+            "expr": "rate(retry_logic_accuracy[5m])",
+            "legendFormat": "Retry Logic Accuracy"
+          },
+          {
+            "expr": "rate(zod_validation_errors[5m])",
+            "legendFormat": "Zod Validation Errors"
+          },
+          {
+            "expr": "rate(redis_cache_hit_rate[5m])",
+            "legendFormat": "Redis Cache Hit Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 1,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "showPoints": "auto",
+              "pointSize": 5,
+              "stacking": {
+                "mode": "none",
+                "group": "A"
+              },
+              "axisLabel": "",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "red", "value": 80}
+                ]
+              }
+            },
+            "unit": "percent"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Latency Thresholds",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 API Response Time"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P99 API Response Time"
+          },
+          {
+            "expr": "avg(frontend_js_idle_time)",
+            "legendFormat": "Frontend JS Idle Time"
+          },
+          {
+            "expr": "avg(agent_handoff_latency)",
+            "legendFormat": "Agent Handoff Latency"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 1,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "showPoints": "auto",
+              "pointSize": 5,
+              "stacking": {
+                "mode": "none",
+                "group": "A"
+              },
+              "axisLabel": "",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 250},
+                  {"color": "red", "value": 500}
+                ]
+              }
+            },
+            "unit": "ms"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Observability Checkpoints",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "avg(prometheus_alert_response_time)",
+            "legendFormat": "Prometheus Alert Response Time"
+          },
+          {
+            "expr": "avg(grafana_panel_refresh_rate)",
+            "legendFormat": "Grafana Panel Refresh Rate"
+          },
+          {
+            "expr": "avg(datadog_trace_completion_rate)",
+            "legendFormat": "Datadog Trace Completion Rate"
+          },
+          {
+            "expr": "avg(cloudflare_worker_execution_time)",
+            "legendFormat": "Cloudflare Worker Execution Time"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 1,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "showPoints": "auto",
+              "pointSize": 5,
+              "stacking": {
+                "mode": "none",
+                "group": "A"
+              },
+              "axisLabel": "",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 30},
+                  {"color": "red", "value": 100}
+                ]
+              }
+            },
+            "unit": "ms"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "MetaAgent Coordination",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "avg(deconfliction_success_rate)",
+            "legendFormat": "Deconfliction Success Rate"
+          },
+          {
+            "expr": "avg(message_queue_throughput)",
+            "legendFormat": "Message Queue Throughput"
+          },
+          {
+            "expr": "avg(handoff_delay)",
+            "legendFormat": "Handoff Delay"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 1,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "showPoints": "auto",
+              "pointSize": 5,
+              "stacking": {
+                "mode": "none",
+                "group": "A"
+              },
+              "axisLabel": "",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 95},
+                  {"color": "red", "value": 90}
+                ]
+              }
+            },
+            "unit": "percent"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "CrossPlatformOptimizationAgent",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "avg(strategy_adaptation_latency)",
+            "legendFormat": "Strategy Adaptation Latency"
+          },
+          {
+            "expr": "avg(performance_uplift_delta)",
+            "legendFormat": "Performance Uplift Delta"
+          },
+          {
+            "expr": "avg(dom_mutation_time)",
+            "legendFormat": "DOM Mutation Time"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 1,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "showPoints": "auto",
+              "pointSize": 5,
+              "stacking": {
+                "mode": "none",
+                "group": "A"
+              },
+              "axisLabel": "",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 200},
+                  {"color": "red", "value": 400}
+                ]
+              }
+            },
+            "unit": "ms"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Load Test Progress",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m]))",
+            "legendFormat": "Requests per Second"
+          },
+          {
+            "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))",
+            "legendFormat": "Error Rate"
+          },
+          {
+            "expr": "sum(rate(http_requests_total{status=~\"2..\"}[5m]))",
+            "legendFormat": "Success Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "displayMode": "list",
+              "orientation": "horizontal"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 1000},
+                {"color": "red", "value": 5000}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 24, "x": 0, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Resource Utilization Heatmap",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total[5m])) by (pod)",
+            "legendFormat": "CPU Usage by Pod"
+          },
+          {
+            "expr": "sum(rate(container_memory_usage_bytes[5m])) by (pod)",
+            "legendFormat": "Memory Usage by Pod"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              }
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28}
+      },
+      {
+        "id": 9,
+        "title": "Alert Summary",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "sum(rate(alertmanager_alerts[5m])) by (alertname, severity)",
+            "legendFormat": "{{alertname}} - {{severity}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 80}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "environment",
+          "type": "query",
+          "query": "production,staging,development",
+          "current": {
+            "selected": true,
+            "text": "production",
+            "value": "production"
+          }
+        },
+        {
+          "name": "test_phase",
+          "type": "query",
+          "query": "warm-up,ramp-up,sustained,peak,spike,recovery",
+          "current": {
+            "selected": true,
+            "text": "sustained",
+            "value": "sustained"
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Test Phases",
+          "datasource": "Prometheus",
+          "expr": "test_phase_change",
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "lineColor": "rgba(0, 211, 255, 0.3)",
+          "fillColor": "rgba(0, 211, 255, 0.1)"
+        },
+        {
+          "name": "Alerts",
+          "datasource": "Prometheus",
+          "expr": "alertmanager_alerts",
+          "iconColor": "rgba(255, 96, 96, 1)",
+          "lineColor": "rgba(255, 96, 96, 0.3)",
+          "fillColor": "rgba(255, 96, 96, 0.1)"
+        }
+      ]
+    },
+    "refresh": "5s",
+    "schemaVersion": 27,
+    "version": 1,
+    "links": [
+      {
+        "title": "CodePal Documentation",
+        "url": "https://docs.codepal.com",
+        "targetBlank": true
+      },
+      {
+        "title": "Load Test Report",
+        "url": "/reports/elasticity-stress-test-report.json",
+        "targetBlank": true
+      }
+    ]
+  }
+} 

@@ -1,0 +1,10 @@
+[
+  {
+    "path": ".next/static/js/*.js",
+    "maxSize": "250kb"
+  },
+  {
+    "path": ".next/static/css/*.css",
+    "maxSize": "50kb"
+  }
+]

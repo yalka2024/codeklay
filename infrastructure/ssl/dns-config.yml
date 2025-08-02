@@ -1,0 +1,203 @@
+# DNS Configuration for CodePal Production
+# This file contains DNS records for production deployment
+
+# Primary Domain Records
+domains:
+  - name: "codepal.com"
+    type: "A"
+    value: "{{ load_balancer_ip }}"
+    ttl: 300
+    
+  - name: "www.codepal.com"
+    type: "CNAME"
+    value: "codepal.com"
+    ttl: 300
+
+# Application Subdomains
+  - name: "app.codepal.com"
+    type: "A"
+    value: "{{ load_balancer_ip }}"
+    ttl: 300
+    
+  - name: "api.codepal.com"
+    type: "A"
+    value: "{{ load_balancer_ip }}"
+    ttl: 300
+
+# Staging Environment
+  - name: "staging.codepal.com"
+    type: "A"
+    value: "{{ staging_load_balancer_ip }}"
+    ttl: 300
+
+# Development Environment
+  - name: "dev.codepal.com"
+    type: "A"
+    value: "{{ dev_load_balancer_ip }}"
+    ttl: 300
+
+# Email Configuration (MX Records)
+  - name: "codepal.com"
+    type: "MX"
+    value: "10 mail.codepal.com"
+    ttl: 3600
+
+# Email Subdomain
+  - name: "mail.codepal.com"
+    type: "A"
+    value: "{{ mail_server_ip }}"
+    ttl: 300
+
+# SPF Record for Email Security
+  - name: "codepal.com"
+    type: "TXT"
+    value: "v=spf1 include:_spf.google.com ~all"
+    ttl: 3600
+
+# DKIM Record for Email Security
+  - name: "google._domainkey.codepal.com"
+    type: "TXT"
+    value: "v=DKIM1; k=rsa; p={{ dkim_public_key }}"
+    ttl: 3600
+
+# DMARC Record for Email Security
+  - name: "_dmarc.codepal.com"
+    type: "TXT"
+    value: "v=DMARC1; p=quarantine; rua=mailto:dmarc@codepal.com; ruf=mailto:dmarc@codepal.com; sp=quarantine; adkim=r; aspf=r;"
+    ttl: 3600
+
+# Security Headers
+  - name: "codepal.com"
+    type: "TXT"
+    value: "google-site-verification={{ google_site_verification }}"
+    ttl: 3600
+
+# CDN Configuration
+  - name: "cdn.codepal.com"
+    type: "CNAME"
+    value: "{{ cloudfront_distribution_domain }}"
+    ttl: 300
+
+# Monitoring and Status Page
+  - name: "status.codepal.com"
+    type: "CNAME"
+    value: "{{ status_page_domain }}"
+    ttl: 300
+
+# SSL Certificate Validation
+  - name: "_acme-challenge.codepal.com"
+    type: "TXT"
+    value: "{{ acme_challenge_token }}"
+    ttl: 60
+
+# API Documentation
+  - name: "docs.codepal.com"
+    type: "CNAME"
+    value: "codepal.com"
+    ttl: 300
+
+# Webhook Endpoints
+  - name: "webhooks.codepal.com"
+    type: "A"
+    value: "{{ load_balancer_ip }}"
+    ttl: 300
+
+# Internal Services (Private DNS)
+private_domains:
+  - name: "internal.codepal.com"
+    type: "A"
+    value: "{{ internal_load_balancer_ip }}"
+    ttl: 300
+    
+  - name: "admin.codepal.com"
+    type: "A"
+    value: "{{ internal_load_balancer_ip }}"
+    ttl: 300
+
+# Load Balancer Health Checks
+health_checks:
+  - name: "health.codepal.com"
+    type: "A"
+    value: "{{ load_balancer_ip }}"
+    ttl: 60
+
+# Geographic Routing (if using Route 53)
+geo_routing:
+  - name: "codepal.com"
+    type: "A"
+    value: "{{ us_east_load_balancer_ip }}"
+    ttl: 300
+    region: "us-east-1"
+    
+  - name: "codepal.com"
+    type: "A"
+    value: "{{ eu_west_load_balancer_ip }}"
+    ttl: 300
+    region: "eu-west-1"
+
+# Failover Configuration
+failover:
+  primary:
+    - name: "codepal.com"
+      type: "A"
+      value: "{{ primary_load_balancer_ip }}"
+      ttl: 300
+      health_check: "primary-health-check"
+      
+  secondary:
+    - name: "codepal.com"
+      type: "A"
+      value: "{{ secondary_load_balancer_ip }}"
+      ttl: 300
+      health_check: "secondary-health-check"
+
+# SSL Certificate Configuration
+ssl_certificates:
+  - domain: "codepal.com"
+    type: "wildcard"
+    provider: "letsencrypt"
+    validation: "dns"
+    auto_renewal: true
+    
+  - domain: "*.codepal.com"
+    type: "wildcard"
+    provider: "letsencrypt"
+    validation: "dns"
+    auto_renewal: true
+
+# DNS Security Configuration
+dnssec:
+  enabled: true
+  algorithm: "RSASHA256"
+  key_size: 2048
+  key_type: "ZSK"
+
+# Monitoring and Alerting
+monitoring:
+  dns_checks:
+    - name: "codepal.com"
+      type: "A"
+      expected_value: "{{ load_balancer_ip }}"
+      check_interval: 60
+      
+  ssl_checks:
+    - domain: "codepal.com"
+      check_interval: 3600
+      alert_threshold: 30  # days before expiry
+      
+  uptime_checks:
+    - url: "https://app.codepal.com"
+      check_interval: 60
+      timeout: 10
+      
+    - url: "https://api.codepal.com"
+      check_interval: 60
+      timeout: 10
+
+# Backup DNS Configuration
+backup_dns:
+  provider: "cloudflare"
+  nameservers:
+    - "ns1.cloudflare.com"
+    - "ns2.cloudflare.com"
+  enabled: false  # Enable only if primary DNS fails 

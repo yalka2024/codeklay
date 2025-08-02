@@ -1,0 +1,463 @@
+config:
+  target: 'http://127.0.0.1:3002'
+  phases:
+    # Warm-up phase (5 minutes)
+    - duration: 300
+      arrivalRate: 100
+      name: "Warm-up Phase"
+    
+    # Gradual ramp-up (10 minutes)
+    - duration: 600
+      arrivalRate: 100
+      rampTo: 1000
+      name: "Ramp-up Phase"
+    
+    # Sustained load (30 minutes)
+    - duration: 1800
+      arrivalRate: 1000
+      name: "Sustained Load Phase"
+    
+    # Peak stress test (10 minutes)
+    - duration: 600
+      arrivalRate: 1000
+      rampTo: 5000
+      name: "Peak Stress Phase"
+    
+    # Spike test (5 minutes)
+    - duration: 300
+      arrivalRate: 5000
+      rampTo: 10000
+      name: "Spike Test Phase"
+    
+    # Recovery test (10 minutes)
+    - duration: 600
+      arrivalRate: 10000
+      rampTo: 1000
+      name: "Recovery Phase"
+
+  http:
+    timeout: 30
+    pool: 1000
+    headers:
+      'Content-Type': 'application/json'
+      'User-Agent': 'CodePal-Elasticity-Test/1.0'
+
+  plugins:
+    metrics-by-endpoint: {}
+    expect: {}
+    artillery-plugin-metrics-by-endpoint: {}
+
+  processor: "./elasticity-processors.js"
+
+  # Autoscaling validation
+  autoscaling:
+    enabled: true
+    metrics:
+      - cpu_utilization
+      - memory_utilization
+      - response_time
+      - error_rate
+    thresholds:
+      cpu_utilization: 70
+      memory_utilization: 80
+      response_time_p95: 250
+      error_rate: 1
+
+  # Error recovery validation
+  error_recovery:
+    retry_attempts: 3
+    backoff_strategy: "exponential"
+    circuit_breaker:
+      failure_threshold: 5
+      recovery_timeout: 30
+
+  # Latency thresholds
+  latency_thresholds:
+    p95_api_response: 250
+    p99_api_response: 500
+    frontend_interactivity: 100
+    agent_handoff: 1000
+
+  # Observability checkpoints
+  observability:
+    prometheus:
+      enabled: true
+      endpoint: "http://prometheus:9090"
+    grafana:
+      enabled: true
+      endpoint: "http://grafana:3000"
+    datadog:
+      enabled: true
+      api_key: "${DATADOG_API_KEY}"
+
+scenarios:
+  - name: "Real-time Code Completion"
+    weight: 25
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ $randomString() }}@test.com"
+            password: "testPassword123"
+          capture:
+            - json: "$.tokens.accessToken"
+              as: "authToken"
+      
+      - think: 2
+      
+      - post:
+          url: "/ai/complete"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            code: "function calculateSum(a, b) {"
+            context: "javascript"
+            language: "js"
+          capture:
+            - json: "$.completion"
+              as: "completion"
+      
+      - think: 1
+      
+      - post:
+          url: "/ai/analyze"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            code: "{{ completion }}"
+            analysis_type: "performance"
+      
+      - think: 3
+
+  - name: "Agent Handoff Coordination"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ $randomString() }}@test.com"
+            password: "testPassword123"
+          capture:
+            - json: "$.tokens.accessToken"
+              as: "authToken"
+      
+      - think: 1
+      
+      - post:
+          url: "/agents/action"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            type: "codebase_management"
+            action: "analyze_repository"
+            data:
+              repository_id: "{{ $randomString() }}"
+              analysis_depth: "deep"
+          capture:
+            - json: "$.agent_id"
+              as: "agentId"
+      
+      - think: 2
+      
+      - post:
+          url: "/agents/action"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            type: "meta_agent"
+            action: "coordinate_optimization"
+            data:
+              agent_ids: ["{{ agentId }}"]
+              optimization_type: "performance"
+      
+      - think: 2
+      
+      - get:
+          url: "/agents/metrics"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  - name: "Cross-Platform Optimization"
+    weight: 15
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ $randomString() }}@test.com"
+            password: "testPassword123"
+          capture:
+            - json: "$.tokens.accessToken"
+              as: "authToken"
+      
+      - think: 1
+      
+      - post:
+          url: "/agents/action"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            type: "cross_platform_optimization"
+            action: "predict_performance"
+            data:
+              code: "const app = express(); app.get('/', (req, res) => res.send('Hello'));"
+              platform: "{{ $randomString(['web', 'mobile', 'desktop', 'server']) }}"
+      
+      - think: 2
+      
+      - post:
+          url: "/agents/action"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            type: "cross_platform_optimization"
+            action: "optimize_for_platform"
+            data:
+              code: "const app = express(); app.get('/', (req, res) => res.send('Hello'));"
+              platform: "{{ $randomString(['web', 'mobile', 'desktop', 'server']) }}"
+              optimization_level: "aggressive"
+
+  - name: "Repository Operations"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ $randomString() }}@test.com"
+            password: "testPassword123"
+          capture:
+            - json: "$.tokens.accessToken"
+              as: "authToken"
+      
+      - think: 1
+      
+      - post:
+          url: "/projects/create"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "Test Project {{ $randomString() }}"
+            description: "Load test project"
+            visibility: "private"
+          capture:
+            - json: "$.project.id"
+              as: "projectId"
+      
+      - think: 1
+      
+      - post:
+          url: "/projects/{{ projectId }}/files"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            path: "src/main.js"
+            content: "console.log('Hello World');"
+            message: "Initial commit"
+      
+      - think: 2
+      
+      - post:
+          url: "/projects/{{ projectId }}/commit"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            message: "Update from load test"
+            files:
+              - path: "src/main.js"
+                content: "console.log('Updated from load test');"
+
+  - name: "Real-time Collaboration"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ $randomString() }}@test.com"
+            password: "testPassword123"
+          capture:
+            - json: "$.tokens.accessToken"
+              as: "authToken"
+      
+      - think: 1
+      
+      - post:
+          url: "/collaboration/join"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            room_id: "test-room-{{ $randomString() }}"
+            user_id: "{{ $randomString() }}"
+      
+      - think: 1
+      
+      - post:
+          url: "/collaboration/broadcast"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            room_id: "test-room-{{ $randomString() }}"
+            message:
+              type: "code_change"
+              data:
+                file: "src/main.js"
+                changes: "console.log('Collaborative edit');"
+      
+      - think: 2
+      
+      - get:
+          url: "/collaboration/status"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+# Validation metrics collection
+validation:
+  autoscaling:
+    - metric: "ecs_cpu_utilization"
+      threshold: 70
+      duration: 300
+    - metric: "ecs_memory_utilization"
+      threshold: 80
+      duration: 300
+    - metric: "vercel_response_time"
+      threshold: 2000
+      duration: 300
+    - metric: "redis_throughput"
+      threshold: 10000
+      duration: 300
+    - metric: "postgresql_replica_lag"
+      threshold: 1000
+      duration: 300
+
+  error_recovery:
+    - metric: "agent_handoff_failure_rate"
+      threshold: 5
+      duration: 600
+    - metric: "retry_logic_accuracy"
+      threshold: 95
+      duration: 600
+    - metric: "zod_validation_errors"
+      threshold: 1
+      duration: 600
+    - metric: "redis_cache_hit_rate"
+      threshold: 80
+      duration: 600
+
+  latency_thresholds:
+    - metric: "api_response_time_p95"
+      threshold: 250
+      duration: 300
+    - metric: "api_response_time_p99"
+      threshold: 500
+      duration: 300
+    - metric: "frontend_js_idle_time"
+      threshold: 100
+      duration: 300
+    - metric: "agent_handoff_latency"
+      threshold: 1000
+      duration: 300
+
+  observability:
+    - metric: "prometheus_alert_response_time"
+      threshold: 30
+      duration: 300
+    - metric: "grafana_panel_refresh_rate"
+      threshold: 5
+      duration: 300
+    - metric: "datadog_trace_completion_rate"
+      threshold: 95
+      duration: 300
+    - metric: "cloudflare_worker_execution_time"
+      threshold: 100
+      duration: 300
+
+  agent_audit:
+    meta_agent:
+      - metric: "deconfliction_success_rate"
+        threshold: 95
+        duration: 600
+      - metric: "message_queue_throughput"
+        threshold: 1000
+        duration: 600
+      - metric: "handoff_delay"
+        threshold: 500
+        duration: 600
+    
+    cross_platform_agent:
+      - metric: "strategy_adaptation_latency"
+        threshold: 200
+        duration: 600
+      - metric: "performance_uplift_delta"
+        threshold: 10
+        duration: 600
+      - metric: "dom_mutation_time"
+        threshold: 50
+        duration: 600
+
+# Output configuration
+output:
+  - file: "./reports/elasticity-stress-test-results.json"
+    format: "json"
+  - file: "./reports/elasticity-stress-test-metrics.csv"
+    format: "csv"
+  - file: "./reports/elasticity-stress-test-summary.html"
+    format: "html"
+
+# Environment-specific configurations
+environments:
+  local:
+    target: 'http://127.0.0.1:3002'
+    phases:
+      - duration: 30
+        arrivalRate: 5
+        name: "Local Warm-up"
+      - duration: 60
+        arrivalRate: 5
+        rampTo: 10
+        name: "Local Ramp-up"
+      - duration: 120
+        arrivalRate: 10
+        name: "Local Sustained Load"
+  
+  staging:
+    target: 'http://127.0.0.1:3002'
+    phases:
+      - duration: 60
+        arrivalRate: 10
+        name: "Staging Warm-up"
+      - duration: 120
+        arrivalRate: 10
+        rampTo: 50
+        name: "Staging Ramp-up"
+      - duration: 300
+        arrivalRate: 50
+        name: "Staging Sustained Load"
+  
+  production:
+    target: 'http://127.0.0.1:3002'
+    phases:
+      - duration: 300
+        arrivalRate: 100
+        name: "Production Warm-up"
+      - duration: 600
+        arrivalRate: 100
+        rampTo: 1000
+        name: "Production Ramp-up"
+      - duration: 1800
+        arrivalRate: 1000
+        name: "Production Sustained Load"
+      - duration: 600
+        arrivalRate: 1000
+        rampTo: 5000
+        name: "Production Peak Stress"
+      - duration: 300
+        arrivalRate: 5000
+        rampTo: 10000
+        name: "Production Spike Test"
+      - duration: 600
+        arrivalRate: 10000
+        rampTo: 1000
+        name: "Production Recovery" 

@@ -1,0 +1,10 @@
+[33m99419ac[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mcodepal[m[33m)[m Add realistic competitive analysis with evidence-based market positioning
+[33m859c21c[m Complete merge and add realistic competitive analysis
+[33m6d54026[m[33m ([m[1;31morigin/codepal[m[33m)[m Untrack temporary submodule temp-codepal-repo
+[33m789be8d[m Resolve merge conflict in package-lock.json by regenerating with --legacy-peer-deps
+[33m91f08e4[m WIP: Before resolving merge conflict
+[33m4f3dd16[m Merge remote-tracking branch 'origin/devin/1752214014-collaborative-enterprise-features' into codepal
+[33m78c9483[m[33m ([m[1;31morigin/fix/critical-security-issues[m[33m, [m[1;32mfix/critical-security-issues[m[33m, [m[1;32mbackup-20250725-050826[m[33m)[m Add centralized API logging middleware, update gateway, and expand enterprise components and E2E tests
+[33m47d9fb5[m Your commit message
+[33m0ffecf6[m Update README.md
+[33m33a7bb2[m fix: update main CI pipeline to trigger on fix/critical-security-issues branch

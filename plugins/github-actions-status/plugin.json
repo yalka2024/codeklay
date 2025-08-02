@@ -1,0 +1,8 @@
+{
+  "id": "github-actions-status",
+  "name": "GitHub Actions Status",
+  "version": "1.0.0",
+  "description": "Displays CI status from GitHub Actions.",
+  "main": "index.js",
+  "category": "ci-cd"
+} 

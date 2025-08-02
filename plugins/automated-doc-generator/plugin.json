@@ -1,0 +1,8 @@
+{
+  "id": "automated-doc-generator",
+  "name": "Automated Documentation Generator",
+  "version": "1.0.0",
+  "description": "Generates documentation from code and comments.",
+  "main": "index.js",
+  "category": "productivity"
+} 

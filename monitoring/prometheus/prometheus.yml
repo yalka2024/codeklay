@@ -1,0 +1,259 @@
+# CodePal Platform - Prometheus Configuration
+# Version: 13.0
+# Purpose: Comprehensive monitoring and alerting
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: production
+    platform: codepal
+
+# Alert manager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Rule files
+rule_files:
+  - "rules/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # CodePal Backend API
+  - job_name: 'codepal-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['api.codepal.ai:3000']
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    honor_labels: true
+    metrics_path: '/metrics'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: false
+
+  # CodePal Frontend (Next.js)
+  - job_name: 'codepal-frontend'
+    static_configs:
+      - targets: ['codepal.ai']
+    scrape_interval: 30s
+    metrics_path: '/_next/static/chunks/pages/_app.js'
+    scheme: https
+
+  # CodePal AI Worker (Cloudflare)
+  - job_name: 'codepal-ai-worker'
+    static_configs:
+      - targets: ['ai.codepal.ai']
+    scrape_interval: 15s
+    scheme: https
+
+  # Database (PostgreSQL)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['database.codepal.ai:5432']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+
+  # Redis Cache
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['cache.codepal.ai:6379']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+
+  # Node Exporter (System metrics)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # Agent Performance Metrics
+  - job_name: 'agent-metrics'
+    static_configs:
+      - targets: ['api.codepal.ai:3000']
+    scrape_interval: 10s
+    metrics_path: '/api/metrics/agents'
+    scheme: https
+    authorization:
+      type: Bearer
+      credentials: ${API_TOKEN}
+
+  # User Analytics
+  - job_name: 'user-analytics'
+    static_configs:
+      - targets: ['api.codepal.ai:3000']
+    scrape_interval: 60s
+    metrics_path: '/api/metrics/users'
+    scheme: https
+
+  # Performance Monitoring
+  - job_name: 'performance-metrics'
+    static_configs:
+      - targets: ['api.codepal.ai:3000']
+    scrape_interval: 30s
+    metrics_path: '/api/metrics/performance'
+    scheme: https
+
+# Service discovery for Kubernetes
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+
+# Custom metrics configuration
+metric_relabel_configs:
+  # Filter out high-cardinality metrics
+  - source_labels: [__name__]
+    regex: '.*_bucket'
+    action: drop
+  - source_labels: [__name__]
+    regex: '.*_sum'
+    action: drop
+  - source_labels: [__name__]
+    regex: '.*_count'
+    action: drop
+
+# Recording rules for aggregated metrics
+recording_rules:
+  - record: codepal:api_request_duration_seconds:p95
+    expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+  
+  - record: codepal:api_request_duration_seconds:p99
+    expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+  
+  - record: codepal:agent_prediction_accuracy
+    expr: sum(rate(agent_predictions_total[5m])) by (agent_type) / sum(rate(agent_predictions_total[5m])) by (agent_type)
+  
+  - record: codepal:user_sessions_active
+    expr: sum(rate(user_sessions_total[5m])) by (status)
+  
+  - record: codepal:database_connections_active
+    expr: sum(rate(database_connections_total[5m])) by (state)
+  
+  - record: codepal:cache_hit_ratio
+    expr: sum(rate(cache_hits_total[5m])) / (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m])))
+
+# Alert rules
+alert_rules:
+  # High error rate
+  - alert: HighErrorRate
+    expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value }}% for the last 5 minutes"
+
+  # High response time
+  - alert: HighResponseTime
+    expr: codepal:api_request_duration_seconds:p95 > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High response time detected"
+      description: "95th percentile response time is {{ $value }}s"
+
+  # Database connection issues
+  - alert: DatabaseConnectionIssues
+    expr: sum(rate(database_connections_total{state="error"}[5m])) > 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Database connection issues detected"
+      description: "Database connection errors are occurring"
+
+  # Agent performance degradation
+  - alert: AgentPerformanceDegradation
+    expr: codepal:agent_prediction_accuracy < 0.85
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Agent performance degradation detected"
+      description: "Agent prediction accuracy is {{ $value }}%"
+
+  # Cache hit ratio low
+  - alert: LowCacheHitRatio
+    expr: codepal:cache_hit_ratio < 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low cache hit ratio detected"
+      description: "Cache hit ratio is {{ $value }}%"
+
+  # High memory usage
+  - alert: HighMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage detected"
+      description: "Memory usage is {{ $value }}%"
+
+  # High CPU usage
+  - alert: HighCPUUsage
+    expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage detected"
+      description: "CPU usage is {{ $value }}%"
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus/data
+    retention.time: 30d
+    retention.size: 50GB
+    wal:
+      retention.period: 12h
+      retention.size: 10GB
+
+# Remote write configuration (for long-term storage)
+remote_write:
+  - url: "https://remote-storage.codepal.ai/api/v1/write"
+    remote_timeout: 30s
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: '.*'
+        action: keep
+
+# Remote read configuration
+remote_read:
+  - url: "https://remote-storage.codepal.ai/api/v1/read"
+    remote_timeout: 30s
+    read_recent: true 

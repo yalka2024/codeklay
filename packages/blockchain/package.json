@@ -1,0 +1,10 @@
+{
+  "name": "@codepal/blockchain",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/CodingPod.sol",
+  "scripts": {
+    "build": "echo 'Solidity build step (use Hardhat or Truffle in real project)'"
+  },
+  "devDependencies": {}
+} 

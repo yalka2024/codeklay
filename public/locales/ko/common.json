@@ -1,0 +1,13 @@
+{
+  "welcome": "CodePal에 오신 것을 환영합니다!",
+  "login": "로그인",
+  "logout": "로그아웃",
+  "dashboard": "대시보드",
+  "settings": "설정",
+  "language": "언어",
+  "onboarding_title": "CodePal 시작하기",
+  "onboarding_step1": "프로젝트를 생성하거나 참여하세요.",
+  "onboarding_step2": "팀을 초대하세요.",
+  "onboarding_step3": "AI 기반 도구를 탐색하세요.",
+  "onboarding_complete": "모두 준비되었습니다!"
+} 

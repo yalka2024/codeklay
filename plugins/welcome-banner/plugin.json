@@ -1,0 +1,8 @@
+{
+  "id": "welcome-banner",
+  "name": "Customizable Welcome Banner",
+  "version": "1.0.0",
+  "description": "Displays a customizable welcome banner for users.",
+  "main": "index.js",
+  "category": "productivity"
+} 

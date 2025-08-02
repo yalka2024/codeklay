@@ -1,0 +1,8 @@
+{
+  "id": "kubernetes-manifest-generator",
+  "name": "Kubernetes Manifest Generator",
+  "version": "1.0.0",
+  "description": "Generates Kubernetes manifests from project config.",
+  "main": "index.js",
+  "category": "devops"
+} 
