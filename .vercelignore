@@ -1,6 +1,7 @@
 # Completely ignore pnpm files
 pnpm-lock.yaml
 pnpm-workspace.yaml
+workspace-config.yaml
 .pnpm-store/
 .pnpm-debug.log
 pnpm-debug.log*
