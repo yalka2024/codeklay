@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --legacy-peer-deps --force --no-package-lock",
+  "installCommand": "npm install --legacy-peer-deps --force",
   "framework": "nextjs",
   "packageManager": "npm@11.5.2",
   "functions": {
