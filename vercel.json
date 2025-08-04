@@ -1,8 +1,8 @@
 {
   "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --legacy-peer-deps --force",
+  "installCommand": "npm install --legacy-peer-deps --force --no-package-lock",
   "framework": "nextjs",
-  "packageManager": "npm",
+  "packageManager": "npm@11.5.2",
   "functions": {
     "app/api/**/*.ts": {
       "runtime": "nodejs18.x"
@@ -10,5 +10,10 @@
   },
   "env": {
     "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NPM_CONFIG_PACKAGE_MANAGER": "npm"
+    }
   }
 } 
