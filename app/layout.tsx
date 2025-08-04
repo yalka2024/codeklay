@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CodePal Platform',
+  title: 'CodeKlay Platform',
   description: 'Advanced AI-powered development platform',
 }
 
@@ -15,14 +16,9 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>CodePal Platform</title>
+        <title>CodeKlay Platform</title>
       </head>
-      <body style={{ 
-        margin: 0, 
-        padding: 0, 
-        fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#f8f9fa'
-      }}>
+      <body>
         {children}
       </body>
     </html>

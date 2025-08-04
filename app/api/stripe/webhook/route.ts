@@ -19,17 +19,46 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        // Find user by email and update plan (mock logic)
-        if (session.customer_email && session.metadata?.plan) {
-          await prisma.user.update({
-            where: { email: session.customer_email },
-            data: { role: session.metadata.plan },
-          });
+        
+        // Check if this is for CodeKlay platform (you can add platform-specific metadata)
+const platform = session.metadata?.platform || 'codeklay';
+
+if (platform === 'codeklay') {
+// Handle CodeKlay-specific logic
+          if (session.customer_email && session.metadata?.plan) {
+            await prisma.user.update({
+              where: { email: session.customer_email },
+              data: { role: session.metadata.plan },
+            });
+          }
+        }
+        // You can add other platform handling here
+        break;
+      }
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        
+        // Handle payment success for CodeKlay marketplace
+if (paymentIntent.metadata?.platform === 'codeklay' || !paymentIntent.metadata?.platform) {
+// Process CodeKlay marketplace payment
+          if (paymentIntent.metadata?.snippetId && paymentIntent.metadata?.userId) {
+            // Grant access to purchased snippet
+            await prisma.snippetPurchase.create({
+              data: {
+                snippetId: paymentIntent.metadata.snippetId,
+                userId: paymentIntent.metadata.userId,
+                amount: paymentIntent.amount / 100, // Convert from cents
+                transactionId: paymentIntent.id,
+              },
+            });
+          }
         }
         break;
       }
       case 'invoice.payment_failed': {
-        // Optionally handle failed payments
+        // Handle failed payments for CodeKlay
+const invoice = event.data.object as Stripe.Invoice;
+console.log('Payment failed for CodeKlay platform:', invoice.customer_email);
         break;
       }
       // Add more event types as needed

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Next-generation AI-powered development platform with personalized learning, decentralized collaboration, AR/VR coding, and cross-platform code fusion",
   "private": true,
+  "packageManager": "npm@11.5.2",
   "workspaces": [
     "apps/*",
     "packages/*"

@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: 'CodePal - AI-Powered Development Platform',
+  title: 'CodeKlay - AI-Powered Development Platform',
   description: 'Build, debug, and deploy applications with AI assistance',
 }
 
