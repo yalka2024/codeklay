@@ -1,8 +1,22 @@
+# Completely ignore pnpm files
 pnpm-lock.yaml
 pnpm-workspace.yaml
 .pnpm-store/
+.pnpm-debug.log
+pnpm-debug.log*
+
+# Ignore other package managers
+yarn.lock
+package-lock.json
+
+# Build artifacts
 node_modules/
 .turbo/
-# Force npm usage
-package-lock.json
-yarn.lock 
+.next/
+dist/
+build/
+
+# Development files
+.env.local
+.env.development
+.env.test 

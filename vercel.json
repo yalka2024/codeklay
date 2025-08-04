@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --legacy-peer-deps --force --ignore-scripts",
+  "installCommand": "npm install --legacy-peer-deps --force --ignore-scripts --no-package-lock",
   "framework": "nextjs",
   "packageManager": "npm@11.5.2",
   "functions": {
@@ -14,7 +14,8 @@
   "build": {
     "env": {
       "NPM_CONFIG_PACKAGE_MANAGER": "npm",
-      "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+      "NPM_CONFIG_PREFER_NPM": "true"
     }
   }
 } 
