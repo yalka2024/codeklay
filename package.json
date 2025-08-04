@@ -42,7 +42,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yalka2024/codepal.git"
+    "url": "https://github.com/yalka2024/codeklay.git"
   },
   "keywords": [
     "ai",
@@ -54,7 +54,7 @@
     "learning",
     "development-platform"
   ],
-  "author": "CodePal Team",
+  "author": "CodeKlay Team",
   "license": "MIT",
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",
@@ -86,8 +86,8 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "critters": "^0.0.25",
-    "framer-motion": "^10.16.4",
-    "lucide-react": "^0.294.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.400.0",
     "next": "^15.4.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
