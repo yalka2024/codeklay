@@ -5,6 +5,8 @@ workspace-config.yaml
 .pnpm-store/
 .pnpm-debug.log
 pnpm-debug.log*
+pnpm-workspace.yaml
+pnpm-lock.yaml
 
 # Ignore other package managers
 yarn.lock
