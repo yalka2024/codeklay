@@ -2,4 +2,7 @@ pnpm-lock.yaml
 pnpm-workspace.yaml
 .pnpm-store/
 node_modules/
-.turbo/ 
+.turbo/
+# Force npm usage
+package-lock.json
+yarn.lock 
