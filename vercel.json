@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run vercel-build",
-  "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
+  "installCommand": "corepack enable && corepack prepare pnpm@10.11.0 --activate && pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
   "packageManager": "pnpm@10.11.0",
   "functions": {
