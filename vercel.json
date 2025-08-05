@@ -2,7 +2,7 @@
   "buildCommand": "npm run vercel-build",
   "installCommand": "npm install --legacy-peer-deps --force --ignore-scripts --no-package-lock --prefer-npm",
   "framework": "nextjs",
-  "packageManager": "npm@11.5.2",
+  "packageManager": "npm@10.8.2",
   "functions": {
     "app/api/**/*.ts": {
       "runtime": "nodejs18.x"
