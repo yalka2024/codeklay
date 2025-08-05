@@ -13,9 +13,7 @@
   },
   "build": {
     "env": {
-      "COREPACK_ENABLE": "1",
-      "PNPM_HOME": "/opt/homebrew/bin",
-      "PATH": "/opt/homebrew/bin:$PATH"
+      "COREPACK_ENABLE": "1"
     }
   }
 } 
