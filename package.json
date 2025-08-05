@@ -19,7 +19,9 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf .next dist node_modules",
     "setup": "corepack enable && pnpm install && pnpm run build",
-    "ci": "pnpm run lint && pnpm run test && pnpm run build"
+    "ci": "pnpm run lint && pnpm run test && pnpm run build",
+    "validate-lockfile": "pnpm install --frozen-lockfile || echo 'Lockfile is outdated - run pnpm install to update'",
+    "regenerate-lockfile": "if exist pnpm-lock.yaml del pnpm-lock.yaml && pnpm install"
   },
   "repository": {
     "type": "git",
