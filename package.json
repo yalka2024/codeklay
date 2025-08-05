@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Next-generation AI-powered development platform with personalized learning, decentralized collaboration, AR/VR coding, and cross-platform code fusion",
   "private": true,
+  "packageManager": "pnpm@10.11.0",
 
   "engines": {
     "node": ">=18.0.0",
@@ -11,7 +12,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "npm install --legacy-peer-deps --force && npm run build",
+    "vercel-build": "corepack enable && pnpm install --no-frozen-lockfile && pnpm run build",
     "test": "echo 'Tests not configured'",
     "lint": "next lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",

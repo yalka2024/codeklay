@@ -1,8 +1,8 @@
 {
   "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --legacy-peer-deps --force --ignore-scripts --no-package-lock --prefer-npm",
+  "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
-  "packageManager": "npm@10.8.2",
+  "packageManager": "pnpm@10.11.0",
   "functions": {
     "app/api/**/*.ts": {
       "runtime": "nodejs18.x"
@@ -13,10 +13,9 @@
   },
   "build": {
     "env": {
-      "NPM_CONFIG_PACKAGE_MANAGER": "npm",
-      "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
-      "NPM_CONFIG_PREFER_NPM": "true",
-      "NPM_CONFIG_IGNORE_SCRIPTS": "true"
+      "COREPACK_ENABLE": "1",
+      "PNPM_HOME": "/opt/homebrew/bin",
+      "PATH": "/opt/homebrew/bin:$PATH"
     }
   }
 } 
