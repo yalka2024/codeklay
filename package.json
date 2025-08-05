@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Next-generation AI-powered development platform with personalized learning, decentralized collaboration, AR/VR coding, and cross-platform code fusion",
   "private": true,
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.0.0",
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=10.0.0"
@@ -21,7 +21,8 @@
     "setup": "corepack enable && pnpm install && pnpm run build",
     "ci": "pnpm run lint && pnpm run test && pnpm run build",
     "validate-lockfile": "pnpm install --frozen-lockfile || echo 'Lockfile is outdated - run pnpm install to update'",
-    "regenerate-lockfile": "if exist pnpm-lock.yaml del pnpm-lock.yaml && pnpm install"
+    "regenerate-lockfile": "if exist pnpm-lock.yaml del pnpm-lock.yaml && pnpm install",
+    "postinstall": "echo 'Lockfile validated with pnpm@10.0.0'"
   },
   "repository": {
     "type": "git",

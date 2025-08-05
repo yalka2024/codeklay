@@ -1,8 +1,8 @@
 {
   "buildCommand": "npm run vercel-build",
-  "installCommand": "corepack enable && corepack prepare pnpm@10.11.0 --activate && pnpm install --no-frozen-lockfile",
+  "installCommand": "corepack enable && corepack prepare pnpm@10.0.0 --activate && pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.0.0",
   "functions": {
     "app/api/**/*.ts": {
       "runtime": "nodejs18.x"
@@ -13,7 +13,8 @@
   },
   "build": {
     "env": {
-      "COREPACK_ENABLE": "1"
+      "COREPACK_ENABLE": "1",
+      "ENABLE_EXPERIMENTAL_COREPACK": "1"
     }
   }
 } 
