@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Next-generation AI-powered development platform with personalized learning, decentralized collaboration, AR/VR coding, and cross-platform code fusion",
   "private": true,
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@10.4.0",
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=10.0.0"
