@@ -1,12 +1,9 @@
-# Completely ignore pnpm files
-pnpm-lock.yaml
+# Ignore pnpm workspace files (but keep pnpm-lock.yaml for Vercel)
 pnpm-workspace.yaml
 workspace-config.yaml
 .pnpm-store/
 .pnpm-debug.log
 pnpm-debug.log*
-pnpm-workspace.yaml
-pnpm-lock.yaml
 
 # Ignore other package managers
 yarn.lock
