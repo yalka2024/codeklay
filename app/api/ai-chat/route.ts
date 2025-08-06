@@ -5,7 +5,8 @@ import { authOptions } from '../auth/[...nextauth]'
 import { trackEvent } from '@/lib/analytics'
 import { EntitlementService } from '../../../backend/api/ai/entitlement.service';
 
-export const runtime = 'edge'
+// Temporarily removed edge runtime to fix Vercel Function Runtimes validation error
+// export const runtime = 'edge'
 
 // Initialize AI service (in production, this would be properly injected)
 const aiService = new AIService(
