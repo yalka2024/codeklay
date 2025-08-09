@@ -10,8 +10,8 @@
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yalka2024/Codepal-F.git
-cd codepal-fix-critical-security-issues
+git clone https://github.com/yalka2024/codeklay.git
+cd codeklay
 ```
 
 ### 2. Install Dependencies
@@ -24,7 +24,7 @@ Create a `.env.local` file in the root directory:
 ```env
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="codepal-secret-key-2025"
-NEXTAUTH_URL="http://localhost:3005"
+NEXTAUTH_URL="http://localhost:3000"
 ```
 
 ### 4. Set Up Database
@@ -35,14 +35,14 @@ npx prisma migrate dev
 
 ### 5. Start the Development Server
 ```bash
-npx next dev --port 3005
+npx next dev --port 3000
 ```
 
 ## 🌐 Access the Platform
 
 Once the server is running, open your browser and go to:
 ```
-http://localhost:3005
+http://localhost:3000
 ```
 
 ## ✅ What You Should See
@@ -96,8 +96,8 @@ codepal-fix-critical-security-issues/
 
 ## 🚨 Important Notes
 
-- The platform runs on port 3005 by default
-- Make sure no other service is using port 3005
+- The platform runs on port 3000 by default
+- Make sure no other service is using port 3000
 - The database file will be created automatically
 - All dependencies are managed through npm
 

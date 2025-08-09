@@ -1,6 +1,6 @@
 import NextAuth, { NextAuthOptions, Session, User as NextAuthUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GitHubProvider from 'next-auth/providers/github';
+import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { PrismaClient, User as PrismaUser } from '@prisma/client';
 import { compare } from 'bcryptjs';
@@ -18,9 +18,22 @@ type SessionUser = {
   role?: string;
 };
 
+// Build providers conditionally to avoid runtime errors when Google envs are not set
+const oauthProviders = [] as any[];
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  oauthProviders.push(
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    })
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
+    ...oauthProviders,
     CredentialsProvider({
       name: 'Credentials',
       credentials: {

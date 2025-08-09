@@ -1,0 +1,23 @@
+steps:
+  - name: 'gcr.io/cloud-builders/pnpm'
+    entrypoint: 'bash'
+    args:
+      - -lc
+      - |
+        corepack enable
+        pnpm install --frozen-lockfile=false
+  - name: 'gcr.io/cloud-builders/pnpm'
+    entrypoint: 'bash'
+    args: ['-lc', 'pnpm run lint || echo "lint warnings"']
+  - name: 'gcr.io/cloud-builders/pnpm'
+    entrypoint: 'bash'
+    args: ['-lc', 'pnpm run type-check']
+  - name: 'gcr.io/cloud-builders/pnpm'
+    entrypoint: 'bash'
+    args: ['-lc', 'pnpm run build']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/codepal/app:$SHORT_SHA', '.']
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/codepal/app:$SHORT_SHA'
+options:
+  logging: CLOUD_LOGGING_ONLY
