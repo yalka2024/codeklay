@@ -113,8 +113,8 @@ codepal/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yalka2024/codepal.git
-   cd codepal
+    git clone https://github.com/yalka2024/codeklay.git
+    cd codeklay
    ```
 
 2. **Install dependencies**

@@ -1,7 +1,7 @@
 # 🚀 CodePal Platform - Deployment Guide
 
 ## ✅ Current Status: SERVER RUNNING
-- **URL**: http://localhost:3005
+- **URL**: http://localhost:3000
 - **Status**: ✅ Operational
 - **Next.js**: 15.4.4
 - **React**: 19.1.0
@@ -28,7 +28,7 @@ Create `.env.local` with:
 ```env
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="your-secret-key"
-NEXTAUTH_URL="http://localhost:3005"
+NEXTAUTH_URL="http://localhost:3000"
 ```
 
 ### 3. **Authentication Setup** (Required)
@@ -66,24 +66,24 @@ taskkill /f /im node.exe
 
 ### Start development server:
 ```powershell
-npx next dev --port 3005
+npx next dev --port 3000
 ```
 
 ### Check if server is running:
 ```powershell
-netstat -ano | findstr 3005
+netstat -ano | findstr 3000
 ```
 
 ### Test server connectivity:
 ```powershell
-Test-NetConnection -ComputerName localhost -Port 3005
+Test-NetConnection -ComputerName localhost -Port 3000
 ```
 
 ## 🌐 Access Your Platform
 
 **Open your browser and go to:**
 ```
-http://localhost:3005
+http://localhost:3000
 ```
 
 ## 🚨 Common Issues & Solutions
@@ -109,7 +109,7 @@ npx prisma migrate dev
 
 ## 📊 Deployment Checklist
 
-- [ ] ✅ Server running on port 3005
+- [ ] ✅ Server running on port 3000
 - [ ] ✅ Database configured
 - [ ] ✅ Environment variables set
 - [ ] ✅ Authentication working
@@ -119,7 +119,7 @@ npx prisma migrate dev
 
 ## 🎯 Next Steps
 
-1. **Test the current setup** at http://localhost:3005
+1. **Test the current setup** at http://localhost:3000
 2. **Set up database** with Prisma
 3. **Configure authentication** with NextAuth
 4. **Add missing UI components**
@@ -128,4 +128,4 @@ npx prisma migrate dev
 
 ---
 
-**Current Status**: ✅ **SERVER IS RUNNING** on http://localhost:3005 
+**Current Status**: ✅ **SERVER IS RUNNING** on http://localhost:3000
